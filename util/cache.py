@@ -18,7 +18,7 @@ def cache_get(name: str) -> dict | None:
 
 
 def layout_get(name: str):
-    return memory.parse_file(f"layouts/{name}.json")
+    return memory.parse_file(f"data/layouts/{name}.json")
 
 
 def cache_fill(ll: Layout, data: dict | None, corpus: str) -> dict[str, dict]:
@@ -62,7 +62,7 @@ def get(name: str, corpus: str):
 def cache_files(file_chunks: list[str]):
     for file in file_chunks:
         name = os.path.splitext(file)[0]
-        ll = memory.parse_file(f"layouts/{name}.json")
+        ll = memory.parse_file(f"data/layouts/{name}.json")
         data = cache_get(name)
 
         for corpus_file in os.scandir('corpora'):

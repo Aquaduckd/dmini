@@ -21,7 +21,7 @@ def exec(message: Message):
     lines.append('```')
 
     layouts = []
-    for file in glob.glob('layouts/*.json'):
+    for file in glob.glob('data/layouts/*.json'):
         ll = memory.parse_file(file)
 
         if ll.user == id:

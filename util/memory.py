@@ -6,7 +6,7 @@ from jellyfish import damerau_levenshtein_distance as lev
 from core.keyboard import Layout, Position
 
 def add(ll: Layout) -> bool:
-    file = f'layouts/{ll.name.lower()}.json'
+    file = f'data/layouts/{ll.name.lower()}.json'
 
     if os.path.exists(file):
         return False
@@ -18,7 +18,7 @@ def add(ll: Layout) -> bool:
     
 
 def remove(name: str, *, id: int, admin: bool = False) -> bool:
-    file = f'layouts/{name}.json'
+    file = f'data/layouts/{name}.json'
 
     if not os.path.exists(file):
         return False
@@ -35,7 +35,7 @@ def remove(name: str, *, id: int, admin: bool = False) -> bool:
 
 
 def get(name: str) -> Layout | None:
-    file = f'layouts/{name}.json'
+    file = f'data/layouts/{name}.json'
 
     if not os.path.exists(file):
         return None
@@ -65,14 +65,14 @@ def parse_file(file: str) -> Layout:
     return ll
 
 def find(name: str) -> Layout:
-    file = f'layouts/{name}.json'
+    file = f'data/layouts/{name}.json'
 
     if not os.path.exists(file):
-        names = [x[8:-5] for x in glob.glob(f'layouts/*.json')]
+        names = [x[13:-5] for x in glob.glob(f'data/layouts/*.json')]
         names = sorted(names, key=lambda x: len(x))
 
         closest = min(names, key=lambda x: lev((''.join(y for y in x.lower() if y in name)), name))
 
-        file = f'layouts/{closest}.json'
+        file = f'data/layouts/{closest}.json'
 
     return parse_file(file)

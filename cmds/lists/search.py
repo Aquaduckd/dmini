@@ -48,7 +48,7 @@ def exec(message: Message):
     # Only filter by name
     if not sfb:
         res: list[str] = []
-        for file in glob.glob('layouts/*.json'):
+        for file in glob.glob('data/layouts/*.json'):
             name = memory.parse_file(file).name
             if is_similar(filter_name, name):
                 res.append(name)
@@ -66,7 +66,7 @@ def exec(message: Message):
             sfb_fingers |= finger_set
 
     res: list[str] = []
-    for file in glob.glob('layouts/*.json'):
+    for file in glob.glob('data/layouts/*.json'):
         ll = memory.parse_file(file)
 
         if not all(x in ll.keys for x in sfb):

@@ -4,7 +4,7 @@ from collections import Counter
 from discord import Message
 
 def exec(message: Message):
-    files = glob.glob('layouts/*.json')
+    files = glob.glob('data/layouts/*.json')
 
     with open('data/misc/authors.json', 'r') as f:
         authors = json.load(f)

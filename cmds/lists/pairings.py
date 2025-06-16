@@ -17,7 +17,7 @@ def exec(message: Message):
         return 'Error: please enter one letter only.'
 
     counts = Counter()
-    for file in glob.glob('layouts/*.json'):
+    for file in glob.glob('data/layouts/*.json'):
         ll = memory.parse_file(file)
 
         if not arg in ll.keys:

@@ -8,7 +8,7 @@ from util import layout, memory
 RESTRICTED = False
 
 def exec(message: Message):
-    files = glob.glob('layouts/*.json')
+    files = glob.glob('data/layouts/*.json')
     file = random.choice(files)
 
     ll = memory.parse_file(file)

@@ -81,7 +81,7 @@ def exec(message: Message):
     if all(not arg for arg in kwargs.values()):
         return f'```\n{use()}\n```'
 
-    for file in glob.glob('layouts/*.json'):
+    for file in glob.glob('data/layouts/*.json'):
         ll = memory.parse_file(file)
 
         if filter_vowel:

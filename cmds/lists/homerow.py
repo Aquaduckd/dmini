@@ -9,7 +9,7 @@ from util import parser, memory
 def exec(message: Message):
     row = ''.join(parser.get_args(message))
     lines = []
-    for file in glob.glob('layouts/*.json'):
+    for file in glob.glob('data/layouts/*.json'):
         ll = memory.parse_file(file)
 
         keys = sorted(ll.keys.items(), key=lambda k: (k[1].row, k[1].col))
