@@ -15,7 +15,7 @@ def load_json(path: str) -> dict:
 
 def ngrams(n: int, *, id: int = 0):
     file = get_corpus(id)
-    path = f'corpora/{file}/{NGRAMS[n - 1]}.json'
+    path = f'data/corpora/{file}/{NGRAMS[n - 1]}.json'
     grams = load_json(path)
     return grams
 
@@ -30,7 +30,7 @@ def trigrams():
 
 def words(id: int = 0):
     file = get_corpus(id)
-    path = f'corpora/{file}/words.json'
+    path = f'data/corpora/{file}/words.json'
     words_ = load_json(path)
     return words_
 

@@ -22,7 +22,7 @@ def layout_get(name: str):
 
 
 def cache_fill(ll: Layout, data: dict | None, corpus: str) -> dict[str, dict]:
-    trigrams = corpora.load_json(f'corpora/{corpus}/trigrams.json')
+    trigrams = corpora.load_json(f'data/corpora/{corpus}/trigrams.json')
 
     stats = analyzer.trigrams(ll, trigrams)
     update = {corpus: stats}

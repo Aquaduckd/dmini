@@ -11,7 +11,7 @@ def ngrams(text: str, *, n: int):
     return dict(Counter(''.join(x) for x in grams if not ' ' in x).most_common())
 
 def main():
-    with open(f'corpora/{FILE}.txt', 'r', encoding='utf-8') as f:
+    with open(f'data/corpora/{FILE}.txt', 'r', encoding='utf-8') as f:
         text = ' '.join(f.read().split())
 
     if not os.path.exists(FILE):

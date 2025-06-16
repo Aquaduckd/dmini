@@ -7,7 +7,7 @@ from util import parser
 def exec(message: Message):
     arg = parser.get_arg(message).lower()
 
-    corpora = [x[8:-1] for x in glob.glob('corpora/*/')]
+    corpora = [x[13:-1] for x in glob.glob('data/corpora/*/')]
 
     if not arg:
         return '\n'.join(['```', 'List of Corpora:'] + [f'- {x}' for x in list(sorted(corpora))] + ['```'])
