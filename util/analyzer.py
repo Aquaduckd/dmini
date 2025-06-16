@@ -3,7 +3,7 @@ from typing import Dict
 
 from core.keyboard import Layout
 
-with open('data/table.json', 'r') as f:
+with open('data/misc/table.json', 'r') as f:
     TABLE: Dict[str, str] = json.load(f)
 DEFAULT_COUNTER: dict[str, float] = dict.fromkeys(set(TABLE.values()) | {'sfR', 'unknown'}, 0)
 

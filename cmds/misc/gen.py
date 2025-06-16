@@ -15,10 +15,10 @@ FINGER_MAP = [
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
 DEFAULT_CHAR = '~'
 
-with open('data/pairs.json', 'r') as f:
+with open('data/misc/pairs.json', 'r') as f:
     PAIRS = json.load(f)
 
-with open('data/places.json', 'r') as f:
+with open('data/misc/places.json', 'r') as f:
     PLACES = json.load(f)
 
 @dataclass

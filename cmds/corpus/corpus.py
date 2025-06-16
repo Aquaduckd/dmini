@@ -15,12 +15,12 @@ def exec(message: Message):
     if not arg in corpora:
         return f'The corpus `{arg}` doesn\'t exist.'
 
-    with open('data/corpora.json', 'r') as f:
+    with open('data/misc/corpora.json', 'r') as f:
         prefs = json.load(f)
 
     prefs[str(message.author.id)] = arg
 
-    with open('data/corpora.json', 'w') as f:
+    with open('data/misc/corpora.json', 'w') as f:
         f.write(json.dumps(prefs, indent=4))
 
     return f'Your corpus preference has been changed to `{arg}`.'    

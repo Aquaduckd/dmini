@@ -45,7 +45,7 @@ def exec(message: Message):
     fspeed = FSpeed(**fspeed_params)
     unweighted_speeds, weighted_speeds = fspeed.fingerspeed(ll, id)
 
-    with open('data/likes.json', 'r') as f:
+    with open('data/misc/likes.json', 'r') as f:
         likes: dict[str, list[int]] = json.load(f)
 
     like_count = len(likes.get(ll.name, ()))

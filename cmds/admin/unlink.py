@@ -16,7 +16,7 @@ def exec(message: Message):
 
     if name in links.__LINKS:
         del links.__LINKS[name]
-        with open('data/links.json', 'w') as f:
+        with open('data/misc/links.json', 'w') as f:
             json.dump(links.__LINKS, f, indent=4)
         return f"Link removed for {name}."
     else:

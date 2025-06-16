@@ -6,13 +6,13 @@ from discord import Message
 def exec(message: Message):
     files = glob.glob('layouts/*.json')
 
-    with open('data/authors.json', 'r') as f:
+    with open('data/misc/authors.json', 'r') as f:
         authors = json.load(f)
 
-    with open('data/likes.json', 'r') as f:
+    with open('data/misc/likes.json', 'r') as f:
         likes = json.load(f)
 
-    with open('data/corpora.json', 'r') as f:
+    with open('data/misc/corpora.json', 'r') as f:
         corpora = json.load(f)
 
     most_liked = list(sorted(likes.items(), key=lambda x: len(x[1]), reverse=True))

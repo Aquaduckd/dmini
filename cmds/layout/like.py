@@ -14,7 +14,7 @@ def exec(message: Message):
     if ll.name == 'QWERTY':
         return 'You can\'t like Qwerty :yellow_circle:'
 
-    with open('data/likes.json', 'r') as f:
+    with open('data/misc/likes.json', 'r') as f:
         likes = json.load(f)
 
     if not ll.name in likes:
@@ -25,7 +25,7 @@ def exec(message: Message):
 
     likes[ll.name].append(id)
 
-    with open('data/likes.json', 'w') as f:
+    with open('data/misc/likes.json', 'w') as f:
         f.write(json.dumps(likes, indent=4))
 
     return f'You liked {ll.name}. (Now at {len(likes[ll.name])} likes)'

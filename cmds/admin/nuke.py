@@ -34,36 +34,36 @@ def owned_layouts(id: int):
 
 def unlink(ll: str):
     links.__LINKS = {key: value for key, value in links.__LINKS.items() if key != ll}
-    with open('data/links.json', 'w') as f:
+    with open('data/misc/links.json', 'w') as f:
         json.dump(links.__LINKS, f, indent=4)
 
 def authors(id: int):
-    with open('data/authors.json', 'r') as f:
+    with open('data/misc/authors.json', 'r') as f:
         authors = json.load(f)
     authors = {name: user_id for name, user_id in authors.items() if user_id != id}
-    with open('data/authors.json', 'w') as f:
+    with open('data/misc/authors.json', 'w') as f:
         json.dump(authors, f, indent=4)
         
 def unlike(id: int):
-    with open('data/likes.json', 'r') as f:
+    with open('data/misc/likes.json', 'r') as f:
         likes = json.load(f)
     for layout, ids in likes.items():
         likes[layout] = [x for x in ids if x != id]
-    with open('data/likes.json', 'w') as f:
+    with open('data/misc/likes.json', 'w') as f:
         json.dump(likes, f, indent=4)
 
 def likes(ll: str):
-    with open('data/likes.json', 'r') as f:
+    with open('data/misc/likes.json', 'r') as f:
         likes = json.load(f)
     if ll in likes:
         del likes[ll]
-    with open('data/likes.json', 'w') as f:
+    with open('data/misc/likes.json', 'w') as f:
         json.dump(likes, f, indent=4)
 
 def corpora(id: int):
-    with open('data/corpora.json', 'r') as f:
+    with open('data/misc/corpora.json', 'r') as f:
         prefs = json.load(f)
     if str(id) in prefs:
         del prefs[str(id)]
-        with open('data/corpora.json', 'w') as f:
+        with open('data/misc/corpora.json', 'w') as f:
             json.dump(prefs, f, indent=4)

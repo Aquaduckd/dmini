@@ -44,7 +44,7 @@ def get_table():
     if TABLE:
         return TABLE
 
-    with open('data/freq.json', 'r') as f:
+    with open('data/misc/freq.json', 'r') as f:
         words: dict[str, str] = json.load(f)
 
     for word, freq in words.items():

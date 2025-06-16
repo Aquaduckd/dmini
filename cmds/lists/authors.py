@@ -3,7 +3,7 @@ from discord import Message
 
 def exec(message: Message):
 
-    with open('data/authors.json', 'r') as f:
+    with open('data/misc/authors.json', 'r') as f:
         authors = json.load(f)
 
     lines = ['Layout Creators:']

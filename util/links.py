@@ -1,6 +1,6 @@
 import json
 
-with open('data/links.json', 'r') as f:
+with open('data/misc/links.json', 'r') as f:
     __LINKS: dict[str, str] = json.load(f)
 
 def get_link(layout_name: str) -> str:

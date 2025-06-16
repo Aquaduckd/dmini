@@ -16,7 +16,7 @@ def exec(message: Message):
 
     if name not in links.__LINKS:
         links.__LINKS[name] = query
-        with open('data/links.json', 'w') as f:
+        with open('data/misc/links.json', 'w') as f:
             json.dump(links.__LINKS, f, indent=4)
         return f'Link added for {name}.'
     else:
