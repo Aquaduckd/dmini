@@ -3,7 +3,7 @@ import glob
 import random
 from discord import Message
 
-from util import layout, memory
+from src import layout, memory
 
 RESTRICTED = False
 

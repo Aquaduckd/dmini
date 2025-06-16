@@ -4,8 +4,8 @@ from typing import Dict, List, Tuple
 from itertools import product, pairwise
 
 from discord import Message
-from util import parser, authors, memory
-from util.admins import ADMINS
+from src import parser, authors, memory
+from src.admins import ADMINS
 
 RESTRICTED = False
 

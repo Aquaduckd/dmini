@@ -4,8 +4,8 @@ from discord import Message
 from collections import Counter
 from itertools import islice
 
-from util import corpora, parser
-from util.consts import PUNCT
+from src import corpora, parser
+from src.consts import PUNCT
 
 def exec(message: Message):
     part = parser.get_arg(message)

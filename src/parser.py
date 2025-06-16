@@ -1,6 +1,6 @@
 from typing import Tuple
 from discord import Message
-from util.consts import TRIGGERS
+from src.consts import TRIGGERS
 from typing import Type, Any
 
 def get_arg(message: Message) -> str:

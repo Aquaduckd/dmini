@@ -1,8 +1,8 @@
 from discord import Message
 
-from util import layout, memory, parser
-from util.consts import *
-from util.returns import *
+from src import layout, memory, parser
+from src.consts import *
+from src.returns import *
 
 def exec(message: Message):
     name, string = parser.get_layout(message)

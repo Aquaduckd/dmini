@@ -1,6 +1,6 @@
 from discord import Message
 
-from util import layout, memory, parser
+from src import layout, memory, parser
 
 def exec(message: Message):
     args = parser.get_args(message)

@@ -2,7 +2,7 @@ import json
 import jellyfish as jf
 from discord import Message
 
-from util import parser
+from src import parser
 
 TABLE: dict[str, dict[str, str]] = {}
 

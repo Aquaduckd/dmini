@@ -5,9 +5,9 @@ import logging
 import discord
 from importlib import import_module
 
-from util.consts import TRIGGERS
-from util import authors
-from util.admins import ADMINS
+from src.consts import TRIGGERS
+from src import authors
+from src.admins import ADMINS
 
 CMINI_CHANNEL = 1063291226243207268
 

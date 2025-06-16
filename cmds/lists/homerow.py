@@ -4,7 +4,7 @@ import random
 import re
 
 from discord import Message, ChannelType
-from util import parser, memory
+from src import parser, memory
 
 def exec(message: Message):
     row = ''.join(parser.get_args(message))

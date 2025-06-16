@@ -1,10 +1,10 @@
 from discord import Message
 from itertools import zip_longest
 
-from util import authors, layout, memory, parser
-from util.consts import *
-from util.returns import *
-from core.keyboard import Layout, Position
+from src import authors, layout, memory, parser
+from src.consts import *
+from src.returns import *
+from src.keyboard import Layout, Position
 
 def exec(message: Message):
     name, string = parser.get_layout(message)

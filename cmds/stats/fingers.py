@@ -1,10 +1,10 @@
 import json
 
 from discord import Message
-from util import authors, corpora, layout, memory, parser
-from util.consts import JSON
-from util.analyzer import TABLE
-from core.keyboard import Layout
+from src import authors, corpora, layout, memory, parser
+from src.consts import JSON
+from src.analyzer import TABLE
+from src.keyboard import Layout
 
 from typing import Final
 

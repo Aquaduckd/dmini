@@ -1,7 +1,7 @@
 from discord import Message
 
-from util import layout, memory, parser
-from core.keyboard import Layout
+from src import layout, memory, parser
+from src.keyboard import Layout
 
 def exec(message: Message):
     args = parser.get_args(message)

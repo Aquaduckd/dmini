@@ -1,6 +1,6 @@
 from discord import Message
 
-from util import memory, parser
+from src import memory, parser
 
 RESTRICTED = True
 

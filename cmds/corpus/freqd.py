@@ -2,7 +2,7 @@ import re
 
 from discord import Message
 
-from util import corpora, parser
+from src import corpora, parser
 
 RESTRICTED = True
 

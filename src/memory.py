@@ -3,7 +3,7 @@ import json
 import glob
 from jellyfish import damerau_levenshtein_distance as lev
 
-from core.keyboard import Layout, Position
+from src.keyboard import Layout, Position
 
 def add(ll: Layout) -> bool:
     file = f'data/layouts/{ll.name.lower()}.json'

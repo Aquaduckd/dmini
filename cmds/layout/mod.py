@@ -1,8 +1,8 @@
 from discord import Message
 from importlib import import_module
 
-from util import layout, memory, parser
-from core.keyboard import Layout
+from src import layout, memory, parser
+from src.keyboard import Layout
 
 RESTRICTED = False
 

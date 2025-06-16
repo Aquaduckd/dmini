@@ -3,7 +3,7 @@ import random
 from jellyfish import jaro_winkler_similarity as jw
 from discord import Message, ChannelType
 
-from util import parser, memory
+from src import parser, memory
 
 # RESTRICTED = True
 

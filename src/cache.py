@@ -4,8 +4,8 @@ import json
 import multiprocessing as mp
 
 import time
-from core.keyboard import Layout
-from util import corpora, analyzer, memory
+from src.keyboard import Layout
+from src import corpora, analyzer, memory
 
 
 def cache_get(name: str) -> dict | None:

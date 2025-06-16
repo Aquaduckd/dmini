@@ -1,7 +1,7 @@
 import json
 from typing import Dict
 
-from core.keyboard import Layout
+from src.keyboard import Layout
 
 with open('data/misc/table.json', 'r') as f:
     TABLE: Dict[str, str] = json.load(f)

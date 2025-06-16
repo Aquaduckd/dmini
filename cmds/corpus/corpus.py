@@ -2,7 +2,7 @@ import glob
 import json
 from discord import Message
 
-from util import parser
+from src import parser
 
 def exec(message: Message):
     arg = parser.get_arg(message).lower()

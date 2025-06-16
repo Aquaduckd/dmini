@@ -1,6 +1,6 @@
 from discord import Message
 
-from util import corpora, memory, parser
+from src import corpora, memory, parser
 
 def exec(message: Message):
     name = parser.get_arg(message)

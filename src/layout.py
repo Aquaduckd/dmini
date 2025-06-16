@@ -1,10 +1,10 @@
 import json
 
-from util import analyzer, authors, corpora, links
-from util.consts import *
-from util.returns import *
+from src import analyzer, authors, corpora, links
+from src.consts import *
+from src.returns import *
 
-from core.keyboard import Layout
+from src.keyboard import Layout
 
 
 def check_name(name: str):

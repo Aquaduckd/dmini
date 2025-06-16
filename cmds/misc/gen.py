@@ -3,8 +3,8 @@ import random
 from discord import Message
 from dataclasses import dataclass
 
-from util import layout
-from core.keyboard import Layout, Position
+from src import layout
+from src.keyboard import Layout, Position
 
 FINGER_MAP = [
     'LP', 'LR', 'LM', 'LI', 'LI', 'RI', 'RI', 'RM', 'RR', 'RP',

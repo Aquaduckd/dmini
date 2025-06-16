@@ -2,8 +2,8 @@ import json
 
 from discord import Message
 
-from util import parser, authors
-from util.admins import ADMINS
+from src import parser, authors
+from src.admins import ADMINS
 
 RESTRICTED = True
 

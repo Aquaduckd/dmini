@@ -3,7 +3,7 @@ import json
 from collections import Counter
 from discord import Message
 
-from util import parser, memory
+from src import parser, memory
 
 def exec(message: Message):
     args = parser.get_args(message)

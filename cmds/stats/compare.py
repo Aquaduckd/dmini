@@ -1,6 +1,6 @@
 from discord import Message
 
-from util import analyzer, corpora, layout, parser, memory
+from src import analyzer, corpora, layout, parser, memory
 
 RESTRICTED = False
 

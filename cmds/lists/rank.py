@@ -1,7 +1,7 @@
 import os
 
 from discord import Message
-from util import parser, corpora, cache
+from src import parser, corpora, cache
 
 from typing import Final
 

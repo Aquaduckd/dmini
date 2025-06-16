@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 
 from discord import Message
 
-from core.keyboard import Layout, Position
-from util import authors, corpora, memory, parser
+from src.keyboard import Layout, Position
+from src import authors, corpora, memory, parser
 
 FINGERS = ('LP', 'LR', 'LM', 'LI', 'RI', 'RM', 'RR', 'RP')
 

@@ -1,7 +1,7 @@
 from discord import Message
 
-from util import memory, parser, authors
-from util.admins import ADMINS
+from src import memory, parser, authors
+from src.admins import ADMINS
 
 RESTRICTED = False
 

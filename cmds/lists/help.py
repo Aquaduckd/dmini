@@ -4,7 +4,7 @@ from discord import Message
 from importlib import import_module
 from more_itertools import divide
 
-from util import parser
+from src import parser
 
 WIDTH = 6
 INDENT = '    '

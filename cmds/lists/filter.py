@@ -3,7 +3,7 @@ import random
 import json
 from discord import Message, ChannelType
 
-from util import parser, memory, corpora, cache
+from src import parser, memory, corpora, cache
 from .search import is_similar, get_line_limit, FINGERS, FINGER_ALIASES
 from .homerow import is_homerow
 from .rank import STATS as LAYOUT_STATS

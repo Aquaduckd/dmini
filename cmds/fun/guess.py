@@ -4,7 +4,7 @@ import random
 from itertools import islice, permutations
 from discord import Message
 
-from util import corpora, parser
+from src import corpora, parser
 
 RESTRICTED = False
 
