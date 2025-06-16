@@ -11,13 +11,18 @@ INDENT = '    '
 
 def exec(message: Message):
     command = parser.get_arg(message)
-    commands = sorted(x.replace('/', '.')[5:-3] for x in glob.glob('cmds/*.py'))
+    
+    commands = {}
+    for file in glob.glob("cmds/**/*.py", recursive=True):
+        path = file.replace("/", ".").split(".")
+        
+        commands[path[-2]] = ".".join(path[1:-1])
     
     if command:
         if not command in commands:
             return f"Unknown command `{command}`"
 
-        mod = import_module(f'cmds.{command}')
+        mod = import_module(f'cmds.{commands[command]}')
 
         if hasattr(mod, 'use'):
             use = mod.use()
@@ -40,7 +45,7 @@ def exec(message: Message):
     else:
         cmds = []
         for cmd in commands:
-            mod = import_module(f'cmds.{cmd}')
+            mod = import_module(f'cmds.{commands[cmd]}')
 
             if not all(hasattr(mod, x) for x in ['exec', 'desc', 'use']):
                 continue

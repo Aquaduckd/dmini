@@ -3,7 +3,7 @@ import json
 from discord import Message
 
 from util import parser, authors
-from admins import ADMINS
+from util.admins import ADMINS
 
 RESTRICTED = True
 

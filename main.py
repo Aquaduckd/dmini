@@ -7,11 +7,15 @@ from importlib import import_module
 
 from util.consts import TRIGGERS
 from util import authors
-from admins import ADMINS
+from util.admins import ADMINS
 
 CMINI_CHANNEL = 1063291226243207268
 
-commands = [x.replace('/', '.')[5:-3] for x in glob.glob('cmds/*.py')]
+commands = {}
+for file in glob.glob("cmds/**/*.py", recursive=True):
+    path = file.replace("/", ".").split(".")
+    
+    commands[path[-2]] = ".".join(path[1:-1])
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -95,7 +99,7 @@ async def on_message(message: discord.Message):
 
     # Check commands
     elif command in commands and maintenance_check(maintenance_mode, message):
-        mod = import_module(f'cmds.{command}')
+        mod = import_module(f'cmds.{commands[command]}')
         reply = mod.exec(message)
 
         if restricted and (mod.RESTRICTED if hasattr(mod, 'RESTRICTED') else True):

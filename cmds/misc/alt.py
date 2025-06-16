@@ -5,7 +5,7 @@ from itertools import product, pairwise
 
 from discord import Message
 from util import parser, authors, memory
-from admins import ADMINS
+from util.admins import ADMINS
 
 RESTRICTED = False
 

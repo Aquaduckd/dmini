@@ -3,7 +3,7 @@ from discord import Message
 from jellyfish import damerau_levenshtein_distance as lev
 
 def update(message: Message):
-    with open('authors.json', 'r') as f:
+    with open('data/authors.json', 'r') as f:
         authors = json.load(f)
 
     user = message.author.name
@@ -11,12 +11,12 @@ def update(message: Message):
 
     authors[user] = id
 
-    with open('authors.json', 'w') as f:
+    with open('data/authors.json', 'w') as f:
         f.write(json.dumps(authors, indent=4))
 
 
 def get_id(name: str) -> int:
-    with open('authors.json', 'r') as f:
+    with open('data/authors.json', 'r') as f:
         authors = json.load(f)
 
     if name in authors:
@@ -29,7 +29,7 @@ def get_id(name: str) -> int:
 
 
 def get_name(id: int) -> str:
-    with open('authors.json', 'r') as f:
+    with open('data/authors.json', 'r') as f:
         authors = json.load(f)
 
     names = [k for k, v in authors.items() if int(v) == id]

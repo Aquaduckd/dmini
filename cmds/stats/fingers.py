@@ -187,7 +187,7 @@ def exec(message: Message):
 
     finger_stats = get_finger_stats(ll, trigrams)
 
-    with open('likes.json', 'r') as f:
+    with open('data/likes.json', 'r') as f:
         likes = json.load(f)
 
     if ll.name in likes:

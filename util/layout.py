@@ -189,7 +189,7 @@ def to_string(ll: Layout, id: int):
     # Ghetto sfb getting
     stats["sfb"] = sfb
 
-    with open('likes.json', 'r') as f:
+    with open('data/likes.json', 'r') as f:
         likes = json.load(f)
 
     if ll.name in likes:
@@ -224,7 +224,7 @@ def fingermap_to_string(ll: Layout):
     matrix_str = get_matrix_str(ll)
     fmatrix_str = get_fingermatrix_str(ll)
     
-    with open('likes.json', 'r') as f:
+    with open('data/likes.json', 'r') as f:
         likes = json.load(f)
 
     if ll.name in likes:

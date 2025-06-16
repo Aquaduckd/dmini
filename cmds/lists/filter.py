@@ -54,7 +54,7 @@ def exec(message: Message):
     # Create the list of blocked ids if the author flag is specified.
     targets: set = set()
     if filter_author:
-        with open("authors.json", "r") as file:
+        with open("data/authors.json", "r") as file:
             targets = set(id for name, id in json.load(file).items() if name.lower() in filter_author)
 
 

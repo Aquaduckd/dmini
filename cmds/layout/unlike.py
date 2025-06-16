@@ -11,7 +11,7 @@ def exec(message: Message):
 
     ll = memory.find(name)
 
-    with open('likes.json', 'r') as f:
+    with open('data/likes.json', 'r') as f:
         likes = json.load(f)
 
     if not ll.name in likes:
@@ -22,7 +22,7 @@ def exec(message: Message):
 
     likes[ll.name].remove(id)
 
-    with open('likes.json', 'w') as f:
+    with open('data/likes.json', 'w') as f:
         f.write(json.dumps(likes, indent=4))
         
     return f'You unliked {ll.name}. (Now at {len(likes[ll.name])} likes)'

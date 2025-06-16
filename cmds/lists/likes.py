@@ -5,7 +5,7 @@ def exec(message: Message):
     id = message.author.id
     name = message.author.name
 
-    with open('likes.json', 'r') as f:
+    with open('data/likes.json', 'r') as f:
         likes: dict[str, list[int]] = json.load(f)
 
     lines = []
