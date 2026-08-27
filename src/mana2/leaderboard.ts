@@ -10,6 +10,7 @@ import {
   requireResolvedCorpusPercentileCutoffs,
 } from "./percentiles.js";
 import {
+  buildAwardsLeaderboard as buildAwardsLeaderboardEntries,
   type AwardBoardId,
   isAwardStatId,
   TOP_AWARD_COUNT,
@@ -28,6 +29,7 @@ export type LayoutLeaderboardFilter = "all" | "magic" | "thumb" | "regular";
 export interface LeaderboardEntry {
   name: string;
   value: number;
+  badges?: string;
 }
 
 export interface LeaderboardAwardData {
@@ -39,7 +41,7 @@ export interface LeaderboardAwardData {
 export interface LeaderboardResult {
   corpus: string;
   filter: LayoutLeaderboardFilter;
-  mode: "stat" | "overall";
+  mode: "stat" | "overall" | "awards";
   stat?: StatDefinition;
   layoutCount: number;
   totalEntries: number;
@@ -157,6 +159,74 @@ function rankByOverall(
   };
 }
 
+function layoutMetadataMap(
+  entries: LayoutCacheEntry[],
+): Map<string, { hasMagic: boolean; hasThumbs: boolean }> {
+  const metadata = new Map<string, { hasMagic: boolean; hasThumbs: boolean }>();
+
+  for (const entry of entries) {
+    metadata.set(entry.layout.trim().toLowerCase(), {
+      hasMagic: entry.has_magic ?? false,
+      hasThumbs: entry.has_thumbs ?? false,
+    });
+  }
+
+  return metadata;
+}
+
+function matchesAwardsFilter(
+  layoutName: string,
+  filter: LayoutLeaderboardFilter,
+  metadata: Map<string, { hasMagic: boolean; hasThumbs: boolean }>,
+): boolean {
+  if (filter === "all") return true;
+
+  const layoutMeta = metadata.get(layoutName.trim().toLowerCase()) ?? {
+    hasMagic: false,
+    hasThumbs: false,
+  };
+
+  return matchesFilter(layoutMeta, filter);
+}
+
+export async function buildAwardsLeaderboard(options: {
+  corpus: string;
+  filter: LayoutLeaderboardFilter;
+  limit: number;
+  offset: number;
+}): Promise<LeaderboardResult | null> {
+  const cacheEntries = await listCurrentVersionCacheEntries();
+  const metadata = layoutMetadataMap(cacheEntries);
+  const { corpus, entries } = await buildAwardsLeaderboardEntries({
+    corpus: options.corpus,
+    layoutMetadata: metadata,
+  });
+
+  const filtered = entries.filter((entry) =>
+    matchesAwardsFilter(entry.name, options.filter, metadata),
+  );
+  const pageEntries = filtered
+    .slice(options.offset, options.offset + options.limit)
+    .map((entry) => ({
+      name: entry.name,
+      value: entry.count,
+      badges: entry.badges,
+    }));
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return {
+    corpus,
+    filter: options.filter,
+    mode: "awards",
+    layoutCount: filtered.length,
+    totalEntries: filtered.length,
+    entries: pageEntries,
+  };
+}
+
 export async function buildLeaderboard(options: {
   corpus: string;
   filter: LayoutLeaderboardFilter;
@@ -244,6 +314,10 @@ export function formatLeaderboardValue(
   result: LeaderboardResult,
   value: number,
 ): string {
+  if (result.mode === "awards") {
+    return String(value);
+  }
+
   if (result.mode === "overall") {
     return formatLeaderboardOverallValue(value);
   }

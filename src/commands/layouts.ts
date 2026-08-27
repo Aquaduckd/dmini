@@ -19,9 +19,16 @@ import {
 } from "../discord/embeds.js";
 import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
+import { CorpusError } from "../mana2/corpus.js";
+import { resolveCorpus } from "../config/user.js";
 import {
   buildLikesAwardData,
+  formatLayoutAwardBadges,
+  loadCorpusAwards,
+  loadLikesAwards,
   refreshLikesAwards,
+  type CorpusAwards,
+  type LikesAwards,
 } from "../mana2/awards.js";
 
 export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
@@ -38,7 +45,22 @@ interface LayoutListScope {
 }
 
 const NAME_COLUMN_GAP = "  ";
+const AWARDS_COLUMN_GAP = "  ";
 const MAX_LAYOUT_NAME_LENGTH = 32;
+
+interface LayoutListAwardContext {
+  corpusAwards: CorpusAwards | null;
+  likesAwards: LikesAwards | null;
+}
+
+function awardBadgesForLayout(
+  layoutName: string,
+  awardContext: LayoutListAwardContext,
+): string {
+  return formatLayoutAwardBadges(layoutName, awardContext.corpusAwards, {
+    likesAwards: awardContext.likesAwards,
+  });
+}
 
 const SORT_LABELS: Record<Exclude<LayoutSort, "name">, string> = {
   likes: "likes",
@@ -177,6 +199,7 @@ function formatLayoutListText(
   layouts: LayoutSummary[],
   sort: LayoutSort,
   direction: LayoutSortDirection,
+  awardContext: LayoutListAwardContext,
 ): string {
   const sortLabel = sort === "name" ? undefined : SORT_LABELS[sort];
   const directionLabel =
@@ -190,15 +213,24 @@ function formatLayoutListText(
     return [header, `${ROW_INDENT}(no layouts)`].join("\n");
   }
 
+  const names = layouts.map((layout) => displayLayoutName(layout.name));
+  const awards = layouts.map((layout) =>
+    awardBadgesForLayout(layout.name, awardContext),
+  );
+  const nameWidth = Math.max(4, ...names.map((name) => name.length));
+  const awardsWidth = Math.max(0, ...awards.map((badge) => badge.length));
+
   if (sort === "name") {
     const body = layouts
-      .map((layout) => `${ROW_INDENT}${displayLayoutName(layout.name)}`)
+      .map((layout, index) => {
+        const name = names[index]!.padEnd(nameWidth);
+        const badge = awards[index]!.padStart(awardsWidth);
+        return `${ROW_INDENT}${name}${AWARDS_COLUMN_GAP}${badge}`.trimEnd();
+      })
       .join("\n");
     return [header, body].join("\n");
   }
 
-  const names = layouts.map((layout) => displayLayoutName(layout.name));
-  const nameWidth = Math.max(0, ...names.map((name) => name.length));
   const valueForLayout = (layout: LayoutSummary): string => {
     if (sort === "likes") return String(layout.like_count ?? 0);
     if (sort === "created") return formatLayoutDate(layout.created_at);
@@ -209,8 +241,10 @@ function formatLayoutListText(
 
   const body = layouts
     .map((layout, index) => {
-      const value = values[index]!;
-      return `${ROW_INDENT}${names[index]!.padEnd(nameWidth)}${NAME_COLUMN_GAP}${value.padStart(valueWidth)}`;
+      const name = names[index]!.padEnd(nameWidth);
+      const value = values[index]!.padStart(valueWidth);
+      const badge = awards[index]!.padStart(awardsWidth);
+      return `${ROW_INDENT}${name}${NAME_COLUMN_GAP}${value}${AWARDS_COLUMN_GAP}${badge}`.trimEnd();
     })
     .join("\n");
 
@@ -277,6 +311,17 @@ export const layoutsCommand: Command = {
 
     limit = clampLimit(limit);
     page = clampPage(page);
+
+    let corpus: string;
+    try {
+      corpus = await resolveCorpus(message.author.id);
+    } catch (error) {
+      if (error instanceof CorpusError) {
+        await replyEmbed(message, errorEmbed(error.message));
+        return;
+      }
+      throw error;
+    }
 
     try {
       let scope: LayoutListScope;
@@ -379,11 +424,21 @@ export const layoutsCommand: Command = {
         );
       }
 
+      const [corpusAwards, likesAwards] = await Promise.all([
+        loadCorpusAwards(corpus),
+        loadLikesAwards(),
+      ]);
+      const awardContext: LayoutListAwardContext = {
+        corpusAwards,
+        likesAwards,
+      };
+
       let text = formatLayoutListText(
         scope.label,
         pageLayouts,
         sort,
         sortDirection,
+        awardContext,
       );
       let footerLimit = limit;
       let footerPageCount = pageCount;
@@ -404,6 +459,7 @@ export const layoutsCommand: Command = {
           reduced.items,
           sort,
           sortDirection,
+          awardContext,
         );
         footerLimit = reducedLimit;
         footerPageCount = reduced.pageCount;

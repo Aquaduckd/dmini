@@ -19,6 +19,7 @@ import {
 } from "../mana2/awards.js";
 import {
   buildLeaderboard,
+  buildAwardsLeaderboard,
   formatLeaderboardValue,
   leaderboardFilterLabel,
   type LeaderboardResult,
@@ -34,6 +35,7 @@ import {
 } from "./layouts.js";
 
 const VALUE_GAP = "  ";
+const BADGES_COLUMN_GAP = "  ";
 
 function formatLeaderboardText(
   result: LeaderboardResult,
@@ -46,12 +48,16 @@ function formatLeaderboardText(
   const header =
     result.mode === "overall"
       ? `Top layouts overall (${result.corpus})${filterPart}`
-      : `Top layouts by ${result.stat!.label} (${result.corpus})${filterPart}`;
+      : result.mode === "awards"
+        ? `Top layouts by awards (${result.corpus})${filterPart}`
+        : `Top layouts by ${result.stat!.label} (${result.corpus})${filterPart}`;
 
   const meta =
     result.mode === "overall"
       ? `Avg percentile across ${result.overallStatCount} stats · ${result.layoutCount} layouts`
-      : `${result.layoutCount} layouts`;
+      : result.mode === "awards"
+        ? `${result.layoutCount} layouts with awards`
+        : `${result.layoutCount} layouts`;
 
   if (result.entries.length === 0) {
     return [header, meta, `${ROW_INDENT}(no layouts)`].join("\n");
@@ -67,8 +73,15 @@ function formatLeaderboardText(
     ...result.entries.map((entry) =>
       formatLeaderboardValue(result, entry.value).length,
     ),
-    result.mode === "overall" ? 4 : 3,
+    result.mode === "overall" ? 4 : 1,
   );
+  const badgesWidth =
+    result.mode === "awards"
+      ? Math.max(
+          0,
+          ...result.entries.map((entry) => entry.badges?.length ?? 0),
+        )
+      : 0;
 
   const body = result.entries
     .map((entry, index) => {
@@ -78,6 +91,10 @@ function formatLeaderboardText(
       const value = formatLeaderboardValue(result, entry.value).padStart(
         valueWidth,
       );
+      if (result.mode === "awards") {
+        const badges = (entry.badges ?? "").padStart(badgesWidth);
+        return `${ROW_INDENT}${rankLabel} ${name}${VALUE_GAP}${value}${BADGES_COLUMN_GAP}${badges}`.trimEnd();
+      }
       return `${ROW_INDENT}${rankLabel} ${name}${VALUE_GAP}${value}`;
     })
     .join("\n");
@@ -88,12 +105,13 @@ function formatLeaderboardText(
 export const leaderboardCommand: Command = {
   name: "leaderboard",
   aliases: ["lb", "top"],
-  description: "Rank layouts by a stat or overall average percentile",
-  usage: `${PREFIX}leaderboard [stat] [--magic|--thumb|--regular] [--corpus NAME] [--limit N] [--page N]`,
+  description: "Rank layouts by a stat, overall average percentile, or award count",
+  usage: `${PREFIX}leaderboard [stat|awards] [--magic|--thumb|--regular] [--corpus NAME] [--limit N] [--page N]`,
   notes:
-    "Omit the stat for overall ranking (average percentile across bigram and trigram stats). Requires a warmed analysis cache and percentile cutoffs built by a server admin.",
+    "Omit the stat for overall ranking (average percentile across bigram and trigram stats). Use `awards` to rank layouts by total badge count. Requires a warmed analysis cache and percentile cutoffs built by a server admin.",
   examples: [
     `${PREFIX}leaderboard sfb`,
+    `${PREFIX}leaderboard awards`,
     `${PREFIX}leaderboard roll --thumb`,
     `${PREFIX}leaderboard --magic --limit 10`,
     `${PREFIX}leaderboard --regular`,
@@ -144,12 +162,14 @@ export const leaderboardCommand: Command = {
       throw error;
     }
 
-    const statId = statInput ? resolveStatId(statInput) ?? undefined : undefined;
-    if (statInput && !statId) {
+    const awardsMode = statInput?.toLowerCase() === "awards";
+    const statId =
+      statInput && !awardsMode ? resolveStatId(statInput) ?? undefined : undefined;
+    if (statInput && !awardsMode && !statId) {
       await replyEmbed(
         message,
         errorEmbed(
-          `Unknown stat \`${statInput}\`. Try values like \`sfb\`, \`roll\`, \`alt\`, or \`lp\`.`,
+          `Unknown stat \`${statInput}\`. Try values like \`sfb\`, \`roll\`, \`alt\`, \`awards\`, or \`lp\`.`,
         ),
       );
       return;
@@ -158,20 +178,29 @@ export const leaderboardCommand: Command = {
     try {
       const userIsAdmin = await isAdmin(message.author.id);
       const offset = (page - 1) * limit;
-      const result = await buildLeaderboard({
-        corpus,
-        filter: layoutFilter ?? "all",
-        statId,
-        limit,
-        offset,
-      });
+      const result = awardsMode
+        ? await buildAwardsLeaderboard({
+            corpus,
+            filter: layoutFilter ?? "all",
+            limit,
+            offset,
+          })
+        : await buildLeaderboard({
+            corpus,
+            filter: layoutFilter ?? "all",
+            statId,
+            limit,
+            offset,
+          });
 
       if (!result) {
         const filterLabel = leaderboardFilterLabel(layoutFilter ?? "all");
         const filterSuffix = layoutFilter ? ` (${filterLabel})` : "";
-        const cacheMessage = userIsAdmin
-          ? `No cached layouts found for corpus \`${corpus}\`${filterSuffix}. Run \`${PREFIX}debug cache warm ${corpus}\` first.`
-          : `Analysis cache isn't ready for corpus \`${corpus}\`${filterSuffix} yet. Ask a server admin to warm it.`;
+        const cacheMessage = awardsMode
+          ? `No awards found for corpus \`${corpus}\`${filterSuffix}. View stat leaderboards or \`${PREFIX}layouts --sort likes\` first to populate awards.`
+          : userIsAdmin
+            ? `No cached layouts found for corpus \`${corpus}\`${filterSuffix}. Run \`${PREFIX}debug cache warm ${corpus}\` first.`
+            : `Analysis cache isn't ready for corpus \`${corpus}\`${filterSuffix} yet. Ask a server admin to warm it.`;
         await replyEmbed(message, errorEmbed(cacheMessage));
         return;
       }
@@ -185,7 +214,7 @@ export const leaderboardCommand: Command = {
         return;
       }
 
-      if (result.awardData) {
+      if (!awardsMode && result.awardData) {
         await refreshBoardAwards(
           result.corpus,
           result.awardData.board,

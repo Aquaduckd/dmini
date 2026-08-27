@@ -8,6 +8,7 @@ import { resolveDownloadedCorpus } from "./corpus.js";
 export const CROWN = "👑";
 export const OVERALL_TIER = "🃏";
 export const LIKES_TIER = "❤️";
+export const LIKES_TIER_MIN = 5;
 export const MAGIC_BADGE = "✨";
 export const THUMB_BADGE = "👍";
 
@@ -34,7 +35,7 @@ export const STAT_AWARD_EMOJI: Record<AwardStatId, string> = {
   alt: "🏓",
 };
 
-export const TOP_AWARD_COUNT = 50;
+export const TOP_AWARD_COUNT = 200;
 
 const AWARD_STAT_ID_SET = new Set<string>(AWARD_STAT_IDS);
 
@@ -130,9 +131,13 @@ export async function buildLikesAwardData(): Promise<{
     return a.name.localeCompare(b.name);
   });
 
+  const tierLayouts = ranked
+    .filter((layout) => (layout.like_count ?? 0) >= LIKES_TIER_MIN)
+    .map((layout) => layout.name);
+
   return {
     crownLayout: ranked[0]?.name,
-    tierLayouts: ranked.slice(0, TOP_AWARD_COUNT).map((layout) => layout.name),
+    tierLayouts,
   };
 }
 
@@ -141,7 +146,7 @@ export async function refreshLikesAwards(
   crownLayout?: string,
 ): Promise<void> {
   const likesAward: BoardAward = {
-    tier: tierLayouts.slice(0, TOP_AWARD_COUNT),
+    tier: tierLayouts,
     awarded_at: new Date().toISOString(),
   };
   if (crownLayout) {
@@ -315,7 +320,7 @@ export function formatLayoutPropertyBadges(options: {
   return badges.join(" ");
 }
 
-export function formatLayoutAwardBadges(
+export function collectLayoutAwardBadges(
   layoutName: string,
   awards: CorpusAwards | null,
   options?: {
@@ -323,7 +328,7 @@ export function formatLayoutAwardBadges(
     hasMagic?: boolean;
     hasThumbs?: boolean;
   },
-): string {
+): string[] {
   const badges: string[] = [];
 
   if (layoutHoldsAnyCrown(layoutName, awards, options?.likesAwards)) {
@@ -347,5 +352,105 @@ export function formatLayoutAwardBadges(
     badges.push(THUMB_BADGE);
   }
 
-  return badges.join(" ");
+  return badges;
+}
+
+export interface AwardsLeaderboardEntry {
+  name: string;
+  count: number;
+  badges: string;
+}
+
+function addAwardedLayoutNames(
+  names: Map<string, string>,
+  layouts: string[] | undefined,
+): void {
+  for (const name of layouts ?? []) {
+    const key = name.trim().toLowerCase();
+    if (!names.has(key)) {
+      names.set(key, name);
+    }
+  }
+}
+
+function collectAwardedLayoutNames(
+  corpusAwards: CorpusAwards | null,
+  likesAwards: LikesAwards | null,
+): string[] {
+  const names = new Map<string, string>();
+
+  if (corpusAwards?.overall) {
+    if (corpusAwards.overall.crown) {
+      addAwardedLayoutNames(names, [corpusAwards.overall.crown]);
+    }
+    addAwardedLayoutNames(names, corpusAwards.overall.tier);
+  }
+
+  for (const statId of AWARD_STAT_IDS) {
+    const board = corpusAwards?.stats[statId];
+    if (board?.crown) {
+      addAwardedLayoutNames(names, [board.crown]);
+    }
+    addAwardedLayoutNames(names, board?.tier);
+  }
+
+  if (likesAwards?.likes?.crown) {
+    addAwardedLayoutNames(names, [likesAwards.likes.crown]);
+  }
+  addAwardedLayoutNames(names, likesAwards?.likes?.tier);
+
+  return [...names.values()];
+}
+
+export async function buildAwardsLeaderboard(options: {
+  corpus: string;
+  layoutMetadata?: Map<string, { hasMagic: boolean; hasThumbs: boolean }>;
+}): Promise<{
+  corpus: string;
+  entries: AwardsLeaderboardEntry[];
+}> {
+  const [corpusAwards, likesAwards] = await Promise.all([
+    loadCorpusAwards(options.corpus),
+    loadLikesAwards(),
+  ]);
+
+  const layoutNames = collectAwardedLayoutNames(corpusAwards, likesAwards);
+  const entries: AwardsLeaderboardEntry[] = [];
+
+  for (const name of layoutNames) {
+    const metadata = options.layoutMetadata?.get(name.trim().toLowerCase());
+    const badges = collectLayoutAwardBadges(name, corpusAwards, {
+      likesAwards,
+      hasMagic: metadata?.hasMagic,
+      hasThumbs: metadata?.hasThumbs,
+    });
+    if (badges.length === 0) continue;
+
+    entries.push({
+      name,
+      count: badges.length,
+      badges: badges.join(" "),
+    });
+  }
+
+  entries.sort(
+    (a, b) => b.count - a.count || a.name.localeCompare(b.name),
+  );
+
+  return {
+    corpus: corpusAwards?.corpus ?? options.corpus,
+    entries,
+  };
+}
+
+export function formatLayoutAwardBadges(
+  layoutName: string,
+  awards: CorpusAwards | null,
+  options?: {
+    likesAwards?: LikesAwards | null;
+    hasMagic?: boolean;
+    hasThumbs?: boolean;
+  },
+): string {
+  return collectLayoutAwardBadges(layoutName, awards, options).join(" ");
 }
