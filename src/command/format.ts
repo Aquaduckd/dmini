@@ -7,7 +7,7 @@ const HELP_GROUPS: { label: string; names: string[] }[] = [
   { label: "General", names: ["help", "about"] },
   { label: "Layouts", names: ["layout", "layouts", "magic"] },
   { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
-  { label: "Social", names: ["like", "unlike", "gift"] },
+  { label: "Social", names: ["like", "likes", "unlike", "gift"] },
   { label: "Analysis", names: ["analyze", "find", "percentiles", "examples"] },
   { label: "Settings", names: ["config"] },
   { label: "Admin", names: ["debug"] },

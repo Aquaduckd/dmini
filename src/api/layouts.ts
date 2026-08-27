@@ -122,6 +122,7 @@ export interface LayoutListResponse {
 export async function listLayouts(
   options: {
     user?: string;
+    likedBy?: string;
     limit?: number;
     offset?: number;
   } = {},
@@ -129,6 +130,7 @@ export async function listLayouts(
   const params = new URLSearchParams();
 
   if (options.user) params.set("user", options.user);
+  if (options.likedBy) params.set("liked_by", options.likedBy);
   if (options.limit !== undefined) params.set("limit", String(options.limit));
   if (options.offset !== undefined) params.set("offset", String(options.offset));
 

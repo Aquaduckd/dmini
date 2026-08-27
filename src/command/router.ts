@@ -12,6 +12,7 @@ import { giftCommand } from "../commands/gift.js";
 import { helpCommand } from "../commands/help.js";
 import { layoutsCommand } from "../commands/layouts.js";
 import { layoutCommand } from "../commands/layout.js";
+import { likesCommand } from "../commands/likes.js";
 import { likeCommand, unlikeCommand } from "../commands/like.js";
 import { magicCommand } from "../commands/magic.js";
 import { percentilesCommand } from "../commands/percentiles.js";
@@ -35,6 +36,7 @@ export function registerCommands(): void {
   registerCommand(swapCommand);
   registerCommand(layoutCommand);
   registerCommand(likeCommand);
+  registerCommand(likesCommand);
   registerCommand(unlikeCommand);
   registerCommand(giftCommand);
   registerCommand(magicCommand);

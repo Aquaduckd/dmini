@@ -21,6 +21,7 @@ import { replyLoggedError } from "../discord/errors.js";
 
 export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
 export const MAX_LAYOUT_LIST_LIMIT = 50;
+export const ROW_INDENT = "  ";
 
 export type LayoutSort = "name" | "likes";
 
@@ -30,22 +31,21 @@ interface LayoutListScope {
   userId?: string;
 }
 
-const ROW_INDENT = "  ";
 const NAME_LIKES_GAP = "  ";
 const MAX_LAYOUT_NAME_LENGTH = 32;
 
-function displayLayoutName(name: string): string {
+export function displayLayoutName(name: string): string {
   if (name.length <= MAX_LAYOUT_NAME_LENGTH) return name;
   if (MAX_LAYOUT_NAME_LENGTH <= 1) return "…";
   return `${name.slice(0, MAX_LAYOUT_NAME_LENGTH - 1)}…`;
 }
 
-function clampLimit(limit: number): number {
+export function clampLimit(limit: number): number {
   if (!Number.isFinite(limit)) return DEFAULT_LAYOUT_LIST_LIMIT;
   return Math.min(Math.max(Math.trunc(limit), 1), MAX_LAYOUT_LIST_LIMIT);
 }
 
-function clampPage(page: number): number {
+export function clampPage(page: number): number {
   if (!Number.isFinite(page)) return 1;
   return Math.max(Math.trunc(page), 1);
 }
@@ -77,7 +77,7 @@ function sortLayouts(layouts: LayoutSummary[], sort: LayoutSort): LayoutSummary[
   return [...layouts].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function paginateLayouts(
+export function paginateLayouts(
   layouts: LayoutSummary[],
   limit: number,
   page: number,
