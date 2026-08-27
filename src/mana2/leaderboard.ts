@@ -10,6 +10,11 @@ import {
   requireResolvedCorpusPercentileCutoffs,
 } from "./percentiles.js";
 import {
+  type AwardBoardId,
+  isAwardStatId,
+  TOP_AWARD_COUNT,
+} from "./awards.js";
+import {
   formatLeaderboardOverallValue,
   formatLeaderboardStatValue,
   getStatDefinition,
@@ -25,6 +30,12 @@ export interface LeaderboardEntry {
   value: number;
 }
 
+export interface LeaderboardAwardData {
+  board: AwardBoardId;
+  crownLayout?: string;
+  tierLayouts: string[];
+}
+
 export interface LeaderboardResult {
   corpus: string;
   filter: LayoutLeaderboardFilter;
@@ -34,6 +45,7 @@ export interface LeaderboardResult {
   totalEntries: number;
   entries: LeaderboardEntry[];
   overallStatCount?: number;
+  awardData?: LeaderboardAwardData;
 }
 
 function findCorpusKey(
@@ -170,6 +182,16 @@ export async function buildLeaderboard(options: {
       options.offset,
       options.offset + options.limit,
     );
+    const awardData =
+      options.filter === "all" && isAwardStatId(options.statId)
+        ? {
+            board: options.statId,
+            crownLayout: allRanked[0]?.name,
+            tierLayouts: allRanked
+              .slice(0, TOP_AWARD_COUNT)
+              .map((entry) => entry.name),
+          }
+        : undefined;
 
     return {
       corpus: index.corpus,
@@ -179,6 +201,7 @@ export async function buildLeaderboard(options: {
       layoutCount,
       totalEntries: allRanked.length,
       entries: ranked,
+      awardData,
     };
   }
 
@@ -194,6 +217,17 @@ export async function buildLeaderboard(options: {
     options.offset + options.limit,
   );
 
+  const awardData =
+    options.filter === "all"
+      ? {
+          board: "overall" as const,
+          crownLayout: allRanked.entries[0]?.name,
+          tierLayouts: allRanked.entries
+            .slice(0, TOP_AWARD_COUNT)
+            .map((entry) => entry.name),
+        }
+      : undefined;
+
   return {
     corpus: index.corpus,
     filter: options.filter,
@@ -202,6 +236,7 @@ export async function buildLeaderboard(options: {
     totalEntries: allRanked.entries.length,
     entries: pageEntries,
     overallStatCount: allRanked.statCount,
+    awardData,
   };
 }
 

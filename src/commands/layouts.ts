@@ -19,6 +19,10 @@ import {
 } from "../discord/embeds.js";
 import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
+import {
+  buildLikesAwardData,
+  refreshLikesAwards,
+} from "../mana2/awards.js";
 
 export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
 export const MAX_LAYOUT_LIST_LIMIT = 50;
@@ -362,6 +366,17 @@ export const layoutsCommand: Command = {
           limit,
           (safePage - 1) * limit,
         ));
+      }
+
+      const shouldRefreshLikesAwards =
+        sort === "likes" && !scope.userId && !searchQuery;
+
+      if (shouldRefreshLikesAwards) {
+        const likesAwardData = await buildLikesAwardData();
+        await refreshLikesAwards(
+          likesAwardData.tierLayouts,
+          likesAwardData.crownLayout,
+        );
       }
 
       let text = formatLayoutListText(

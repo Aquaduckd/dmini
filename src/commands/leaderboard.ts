@@ -15,6 +15,9 @@ import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import {
+  refreshBoardAwards,
+} from "../mana2/awards.js";
+import {
   buildLeaderboard,
   formatLeaderboardValue,
   leaderboardFilterLabel,
@@ -69,12 +72,13 @@ function formatLeaderboardText(
 
   const body = result.entries
     .map((entry, index) => {
-      const rank = `${startRank + index}.`.padStart(rankWidth + 1);
+      const rank = startRank + index;
+      const rankLabel = `${rank}.`.padStart(rankWidth + 1);
       const name = displayLayoutName(entry.name).padEnd(nameWidth);
       const value = formatLeaderboardValue(result, entry.value).padStart(
         valueWidth,
       );
-      return `${ROW_INDENT}${rank} ${name}${VALUE_GAP}${value}`;
+      return `${ROW_INDENT}${rankLabel} ${name}${VALUE_GAP}${value}`;
     })
     .join("\n");
 
@@ -140,7 +144,7 @@ export const leaderboardCommand: Command = {
       throw error;
     }
 
-    const statId = statInput ? resolveStatId(statInput) : undefined;
+    const statId = statInput ? resolveStatId(statInput) ?? undefined : undefined;
     if (statInput && !statId) {
       await replyEmbed(
         message,
@@ -179,6 +183,15 @@ export const leaderboardCommand: Command = {
           errorEmbed(`Page ${page} is out of range (max ${pageCount}).`),
         );
         return;
+      }
+
+      if (result.awardData) {
+        await refreshBoardAwards(
+          result.corpus,
+          result.awardData.board,
+          result.awardData.tierLayouts,
+          result.awardData.crownLayout,
+        );
       }
 
       const text = formatLeaderboardText(result, page, limit);

@@ -10,6 +10,12 @@ import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { Mana2Error } from "../mana2/cli.js";
+import {
+  formatLayoutAwardBadges,
+  loadCorpusAwards,
+  loadLikesAwards,
+} from "../mana2/awards.js";
+import { layoutHasMagicRules, layoutHasThumbKeys } from "../mana2/convert.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
 import { formatMagicRuleCount } from "../layout/magic.js";
 import { isStaggeredBoard, layoutLikeCount, layoutToRenderKeys, formatLikeCount, formatLayoutCreatedAt } from "../layout/types.js";
@@ -57,19 +63,30 @@ export const layoutCommand: Command = {
         return;
       }
 
-      const [author, renderMode, fingermapPalette] = await Promise.all([
+      const corpus = await resolveCorpus(message.author.id);
+      const [author, renderMode, fingermapPalette, awards, likesAwards] =
+        await Promise.all([
         resolveLayoutAuthor(layout.user),
         resolveRenderMode(message.author.id, renderModeFlag),
         resolveFingermapPalette(message.author.id),
+        loadCorpusAwards(corpus),
+        loadLikesAwards(),
       ]);
-      let corpus: string | undefined;
       let heat;
 
       if (renderMode === "heatmap") {
-        corpus = await resolveCorpus(message.author.id);
         const monograms = await loadCorpusMonograms(corpus);
         heat = buildHeatContext(monograms, keys);
       }
+
+      const awardBadges = formatLayoutAwardBadges(layout.name, awards, {
+        likesAwards,
+        hasMagic: layoutHasMagicRules(layout),
+        hasThumbs: layoutHasThumbKeys(layout),
+      });
+      const title = awardBadges
+        ? `${layout.name} ${awardBadges}`
+        : layout.name;
 
       const png = renderKeyboardPng(keys, isStaggeredBoard(layout.board), {
         mode: renderMode,
@@ -80,7 +97,7 @@ export const layoutCommand: Command = {
       const attachment = new AttachmentBuilder(png, { name: filename });
       const embed = new EmbedBuilder()
         .setColor(Colors.primary)
-        .setTitle(layout.name)
+        .setTitle(title)
         .setImage(`attachment://${filename}`);
 
       if (author) {
@@ -96,7 +113,7 @@ export const layoutCommand: Command = {
       if (magicRuleCount > 0) {
         footerParts.push(formatMagicRuleCount(magicRuleCount));
       }
-      if (renderMode === "heatmap" && corpus) {
+      if (renderMode === "heatmap") {
         footerParts.push(`Heatmap · ${corpus} corpus`);
       }
       embed.setFooter({ text: footerParts.join(" · ") });
