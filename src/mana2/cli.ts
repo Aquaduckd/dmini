@@ -52,7 +52,7 @@ export function wrapMana2Command(
   corpus: string,
   options: { engine?: "extended" } = {},
 ): string {
-  const parts: string[] = [];
+  const parts: string[] = ["(spacegrams false)"];
   if (options.engine === "extended") {
     parts.push("(engine extended)");
   }
@@ -67,12 +67,18 @@ function normalizeMana2Output(stdout: string): string {
   return jsonStart === -1 ? trimmed : trimmed.slice(jsonStart);
 }
 
+function resolveMana2CliExecutable(): string {
+  const configured = process.env.MANA2_CLI?.trim();
+  if (configured) return configured;
+  return "/usr/local/bin/mana2-cli";
+}
+
 export function runMana2Cli(
   mana2Root: string,
   command: string,
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
-    const child = spawn("go", ["run", "./cmd/cli", command], {
+    const child = spawn(resolveMana2CliExecutable(), [command], {
       cwd: mana2Root,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
