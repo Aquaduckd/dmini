@@ -29,6 +29,8 @@ import {
   missingAnalysisCharacters,
 } from "../layout/types.js";
 import { CorpusError, downloadAllCorpora, downloadCorpus, listCorpora } from "../mana2/corpus.js";
+import { togglePublicAccessBlocked } from "../config/access.js";
+import { collectSystemInfo, formatSystemInfo } from "../system/info.js";
 
 interface DebugSubcommand {
   description: string;
@@ -445,6 +447,33 @@ async function handlePercentiles(message: Message, args: string): Promise<void> 
   }
 }
 
+async function handleSystem(message: Message): Promise<void> {
+  try {
+    const info = await collectSystemInfo();
+    await replyEmbed(message, infoEmbed("System status", formatSystemInfo(info)));
+  } catch (error) {
+    await replyLoggedError(
+      message,
+      "Failed to collect system info:",
+      error,
+      "Failed to collect system info",
+    );
+  }
+}
+
+async function handle1984(message: Message): Promise<void> {
+  const locked = await togglePublicAccessBlocked();
+  await replyEmbed(
+    message,
+    infoEmbed(
+      "1984",
+      locked
+        ? "Public access **disabled**. Only admins can use dmini."
+        : "Public access **enabled**. Everyone can use dmini again.",
+    ),
+  );
+}
+
 const subcommands: Record<string, DebugSubcommand> = {
   layout: {
     description: "Fetch raw JSON for a layout",
@@ -493,18 +522,68 @@ const subcommands: Record<string, DebugSubcommand> = {
     examples: [`${PREFIX}debug versions`],
     execute: (message) => handleVersions(message),
   },
+  system: {
+    description: "Show memory usage, load, disk, and process stats",
+    usage: `${PREFIX}debug system`,
+    examples: [`${PREFIX}debug system`],
+    execute: (message) => handleSystem(message),
+  },
+  "1984": {
+    description: "Toggle whether non-admins can use dmini",
+    usage: `${PREFIX}debug 1984`,
+    examples: [`${PREFIX}debug 1984`],
+    execute: (message) => handle1984(message),
+  },
 };
+
+const DEBUG_GROUPS: { label: string; names: string[] }[] = [
+  { label: "Layouts", names: ["layout", "analyze"] },
+  { label: "Corpora", names: ["corpus"] },
+  { label: "Cache", names: ["cache", "percentiles", "versions"] },
+  { label: "System", names: ["system", "1984"] },
+];
+
+function formatDebugSubcommandList(entries: DebugSubcommand[]): string {
+  return entries
+    .map((entry) => `\`${entry.usage}\` — ${entry.description}`)
+    .join("\n");
+}
 
 function debugListEmbed() {
   const embed = infoEmbed(
     "Debug commands",
-    "Available debug subcommands:",
+    `Use \`${PREFIX}debug <subcommand>\` for admin utilities.`,
   );
 
-  for (const subcommand of Object.values(subcommands)) {
+  const grouped = new Set<string>();
+
+  for (const group of DEBUG_GROUPS) {
+    const entries = group.names
+      .map((name) => subcommands[name])
+      .filter((entry): entry is DebugSubcommand => entry !== undefined);
+
+    for (const name of group.names) {
+      grouped.add(name);
+    }
+
+    if (entries.length === 0) continue;
+
     embed.addFields({
-      name: subcommand.usage,
-      value: subcommand.description,
+      name: group.label,
+      value: formatDebugSubcommandList(entries),
+      inline: false,
+    });
+  }
+
+  const other = Object.entries(subcommands)
+    .filter(([name]) => !grouped.has(name))
+    .map(([, entry]) => entry)
+    .sort((a, b) => a.usage.localeCompare(b.usage));
+
+  if (other.length > 0) {
+    embed.addFields({
+      name: "Other",
+      value: formatDebugSubcommandList(other),
       inline: false,
     });
   }
@@ -525,6 +604,8 @@ export const debugCommand: Command = {
     `${PREFIX}debug cache warm`,
     `${PREFIX}debug percentiles`,
     `${PREFIX}debug versions`,
+    `${PREFIX}debug system`,
+    `${PREFIX}debug 1984`,
   ],
   async execute({ message, args }) {
     const trimmed = args.trim();

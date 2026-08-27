@@ -4,6 +4,8 @@ import {
   GatewayIntentBits,
 } from "discord.js";
 import { config } from "./config.js";
+import { isAdmin } from "./config/admins.js";
+import { isPublicAccessBlocked } from "./config/access.js";
 import {
   getCommand,
   parseMessage,
@@ -51,6 +53,19 @@ export async function startBot(): Promise<void> {
 
     const parsed = parseMessage(message.content, PREFIX);
     if (!parsed) return;
+
+    if (
+      (await isPublicAccessBlocked()) &&
+      !(await isAdmin(message.author.id))
+    ) {
+      await replyEmbed(
+        message,
+        errorEmbed(
+          "dmini is in maintenance mode. Only admins can use commands right now.",
+        ),
+      );
+      return;
+    }
 
     const command = getCommand(parsed.name);
     if (
