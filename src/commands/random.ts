@@ -1,32 +1,42 @@
-import { fetchLayoutDoc, LayoutApiError, LayoutNotFoundError } from "../api/layouts.js";
+import { LayoutApiError, LayoutNotFoundError } from "../api/layouts.js";
 import { PREFIX } from "../command/constants.js";
 import { FlagParseError, parseCommandArgs } from "../command/flags.js";
-import type { Command } from "../command/types.js";
 import { replyUsage } from "../command/format.js";
+import type { Command } from "../command/types.js";
 import { errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { presentLayout } from "../layout/present.js";
+import { NoMatchingLayoutsError, pickRandomLayout } from "../layout/random.js";
 
-export const layoutCommand: Command = {
-  name: "layout",
-  aliases: ["view"],
-  description: "Show a keyboard layout",
-  usage: `${PREFIX}layout <name> [--heatmap|--fingermap]`,
+export const randomCommand: Command = {
+  name: "random",
+  description: "Show a random keyboard layout",
+  usage: `${PREFIX}random [--magic|--thumb|--regular] [--heatmap|--fingermap]`,
   examples: [
-    `${PREFIX}layout qwerty`,
-    `${PREFIX}layout gallium --heatmap`,
+    `${PREFIX}random`,
+    `${PREFIX}random --magic`,
+    `${PREFIX}random --thumb --heatmap`,
+    `${PREFIX}random --regular`,
   ],
   async execute({ message, args }) {
-    let positional: string[];
+    let layoutFilter: "magic" | "thumb" | "regular" | undefined;
     let renderModeFlag: "fingermap" | "heatmap" | undefined;
 
     try {
-      ({
-        positional,
-        flags: { renderMode: renderModeFlag },
-      } = parseCommandArgs(args, { renderMode: true }));
+      const { positional, flags } = parseCommandArgs(args, {
+        layoutFilter: true,
+        renderMode: true,
+      });
+
+      if (positional.length > 0) {
+        await replyUsage({ message, args }, randomCommand);
+        return;
+      }
+
+      layoutFilter = flags.layoutFilter;
+      renderModeFlag = flags.renderMode;
     } catch (error) {
       if (error instanceof FlagParseError) {
         await replyEmbed(message, errorEmbed(error.message));
@@ -35,16 +45,15 @@ export const layoutCommand: Command = {
       throw error;
     }
 
-    const name = positional[0]?.trim();
-    if (!name || positional.length > 1) {
-      await replyUsage({ message, args }, layoutCommand);
-      return;
-    }
-
     try {
-      const layout = await fetchLayoutDoc(name);
+      const layout = await pickRandomLayout(layoutFilter ?? "all");
       await presentLayout(message, layout, { renderModeFlag });
     } catch (error) {
+      if (error instanceof NoMatchingLayoutsError) {
+        await replyEmbed(message, errorEmbed(error.message));
+        return;
+      }
+
       if (error instanceof LayoutNotFoundError) {
         await replyEmbed(message, errorEmbed(error.formatMessage()));
         return;
@@ -58,9 +67,9 @@ export const layoutCommand: Command = {
       if (error instanceof LayoutApiError || error instanceof Mana2Error) {
         await replyLoggedError(
           message,
-          "Failed to render layout:",
+          "Failed to render random layout:",
           error,
-          "Failed to render layout",
+          "Failed to render random layout",
         );
         return;
       }
@@ -72,9 +81,9 @@ export const layoutCommand: Command = {
 
       await replyLoggedError(
         message,
-        "Failed to render layout:",
+        "Failed to render random layout:",
         error,
-        "Failed to render layout",
+        "Failed to render random layout",
       );
     }
   },

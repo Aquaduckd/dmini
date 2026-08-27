@@ -13,6 +13,7 @@ import { giftCommand } from "../commands/gift.js";
 import { helpCommand } from "../commands/help.js";
 import { layoutsCommand } from "../commands/layouts.js";
 import { layoutCommand } from "../commands/layout.js";
+import { randomCommand } from "../commands/random.js";
 import { leaderboardCommand } from "../commands/leaderboard.js";
 import { likesCommand } from "../commands/likes.js";
 import { likeCommand, unlikeCommand } from "../commands/like.js";
@@ -37,6 +38,7 @@ export function registerCommands(): void {
   registerCommand(clearmagicCommand);
   registerCommand(swapCommand);
   registerCommand(layoutCommand);
+  registerCommand(randomCommand);
   registerCommand(likeCommand);
   registerCommand(likesCommand);
   registerCommand(unlikeCommand);
