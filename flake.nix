@@ -1,5 +1,5 @@
 {
-  description = "A Bun devshell";
+  description = "A Node devshell";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -25,7 +25,7 @@
           with pkgs;
           mkShell {
             buildInputs = [
-              bun
+              nodejs
               pkg-config
             ];
           };
