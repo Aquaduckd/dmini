@@ -151,6 +151,10 @@ function formatMagicRulesColumns(rules: LayoutMagicRule[]): string[] {
   return lines;
 }
 
+export function formatMagicRuleCount(count: number): string {
+  return count === 1 ? "1 magic rule" : `${count} magic rules`;
+}
+
 export function formatMagicRulesText(rules: LayoutMagicRule[]): string {
   if (rules.length === 0) return "";
 

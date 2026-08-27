@@ -10,7 +10,6 @@ import { errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
   isStaggeredBoard,
-  layoutLikeCount,
   layoutNotAnalyzableMessage,
   layoutToRenderKeys,
   missingAnalysisCharacters,
@@ -123,9 +122,7 @@ export const analyzeCommand: Command = {
         filename,
         corpus,
         author,
-        layoutLikeCount(layout),
         percentileTable?.stats,
-        layout.created_at,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });

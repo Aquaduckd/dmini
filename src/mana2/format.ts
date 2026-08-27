@@ -1,6 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import { Colors, ansiCodeBlock, textCodeBlock } from "../discord/embeds.js";
-import { formatLikeCount, formatLayoutCreatedAt } from "../layout/types.js";
+import { formatLikeCount } from "../layout/types.js";
 import { percentileFromCutoffs } from "./percentiles.js";
 import { getStatValue, type Mana2Analysis } from "./parse.js";
 
@@ -453,20 +453,8 @@ export function buildAnalysisEmbed(
   imageFilename: string,
   corpus = "monkeyracer",
   author?: string,
-  likeCount?: number,
   cutoffs?: Record<string, number[]>,
-  createdAt?: string,
 ): EmbedBuilder {
-  const footerParts: string[] = [];
-  if (likeCount !== undefined) {
-    footerParts.push(formatLikeCount(likeCount));
-  }
-  const createdLabel = formatLayoutCreatedAt(createdAt);
-  if (createdLabel) {
-    footerParts.push(createdLabel);
-  }
-  footerParts.push(`Corpus: ${corpus} · mana2`);
-
   const text = formatAnalysisText(analysis, cutoffs);
   const description = cutoffs ? ansiCodeBlock(text) : textCodeBlock(text);
 
@@ -475,7 +463,7 @@ export function buildAnalysisEmbed(
     .setTitle(layoutName)
     .setDescription(description)
     .setImage(`attachment://${imageFilename}`)
-    .setFooter({ text: footerParts.join(" · ") });
+    .setFooter({ text: `Corpus: ${corpus} · mana2` });
 
   if (author) {
     embed.setAuthor({ name: author });
