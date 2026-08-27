@@ -27,6 +27,7 @@ export const analyzeCommand: Command = {
   description: "Analyze a keyboard layout",
   usage: `${PREFIX}analyze <name> [--corpus <name>] [--heatmap|--fingermap]`,
   group: "Analysis",
+  aliases: ["analyse"],
   examples: [
     `${PREFIX}analyze qwerty`,
     `${PREFIX}analyze gallium --corpus reddit`,
