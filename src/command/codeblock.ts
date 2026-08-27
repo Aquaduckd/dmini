@@ -1,17 +1,19 @@
+import { stripPrefix } from "./constants.js";
+
 export function parseCommandWithOptionalCodeBlock(
   content: string,
-  prefix: string,
   commandName: string,
 ): { args: string; codeBlock?: string } | null {
   const fenceIndex = content.indexOf("```");
   const header =
     fenceIndex === -1 ? content.trimEnd() : content.slice(0, fenceIndex).trimEnd();
 
-  if (!header.startsWith(prefix)) {
+  const rest = stripPrefix(header);
+  if (rest === null) {
     return null;
   }
 
-  const body = header.slice(prefix.length).trim();
+  const body = rest.trim();
   const space = body.indexOf(" ");
   if (space === -1 || body.slice(0, space).toLowerCase() !== commandName) {
     return null;

@@ -18,6 +18,7 @@ import { removeCommand } from "../commands/remove.js";
 import { renameCommand } from "../commands/rename.js";
 import { setboardCommand } from "../commands/setboard.js";
 import { swapCommand } from "../commands/swap.js";
+import { stripPrefix } from "./constants.js";
 import { clearCommands, registerCommand } from "./registry.js";
 
 export function registerCommands(): void {
@@ -47,11 +48,11 @@ export function registerCommands(): void {
 
 export function parseMessage(
   content: string,
-  prefix: string,
 ): { name: string; args: string } | null {
-  if (!content.startsWith(prefix)) return null;
+  const rest = stripPrefix(content);
+  if (rest === null) return null;
 
-  const body = content.slice(prefix.length).trim();
+  const body = rest.trim();
   if (!body) return null;
 
   const space = body.indexOf(" ");

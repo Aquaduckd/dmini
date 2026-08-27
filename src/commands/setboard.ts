@@ -52,7 +52,6 @@ export const setboardCommand: Command = {
   async execute({ message, args }) {
     const input = parseCommandWithOptionalCodeBlock(
       message.content,
-      PREFIX,
       "setboard",
     );
     if (!input) {

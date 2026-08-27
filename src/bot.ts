@@ -48,7 +48,7 @@ export async function startBot(): Promise<void> {
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
 
-    const parsed = parseMessage(message.content, PREFIX);
+    const parsed = parseMessage(message.content);
     if (!parsed) return;
 
     const command = getCommand(parsed.name);

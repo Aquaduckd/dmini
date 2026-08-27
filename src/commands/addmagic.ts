@@ -45,7 +45,6 @@ export const addmagicCommand: Command = {
   async execute({ message }) {
     const input = parseCommandWithOptionalCodeBlock(
       message.content,
-      PREFIX,
       "addmagic",
     );
 
