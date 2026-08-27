@@ -111,6 +111,8 @@ export interface LayoutSummary {
   tag?: string;
   key_count?: number;
   like_count?: number;
+  has_magic?: boolean;
+  has_thumbs?: boolean;
   created_at?: string;
   modified_at?: string;
 }
