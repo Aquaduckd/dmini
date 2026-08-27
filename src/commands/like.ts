@@ -97,6 +97,7 @@ export const likeCommand: Command = {
   name: "like",
   description: "Like a layout",
   usage: `${PREFIX}like <layout>`,
+  group: "Social",
   examples: [`${PREFIX}like sturdy`],
   execute(context) {
     return executeLikeMutation(context, likeCommand, "like");
@@ -107,6 +108,7 @@ export const unlikeCommand: Command = {
   name: "unlike",
   description: "Remove your like from a layout",
   usage: `${PREFIX}unlike <layout>`,
+  group: "Social",
   examples: [`${PREFIX}unlike sturdy`],
   execute(context) {
     return executeLikeMutation(context, unlikeCommand, "unlike");

@@ -18,6 +18,7 @@ export const layoutCommand: Command = {
   name: "layout",
   description: "Show a keyboard layout",
   usage: `${PREFIX}layout <name> [--heatmap|--fingermap]`,
+  group: "Layouts",
   aliases: ["view"],
   examples: [
     `${PREFIX}layout qwerty`,

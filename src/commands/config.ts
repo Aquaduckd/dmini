@@ -43,6 +43,7 @@ export const configCommand: Command = {
   name: "config",
   description: "View or change your analysis settings",
   usage: `${PREFIX}config [corpus|render|palette [value]]`,
+  group: "Settings",
   examples: [
     `${PREFIX}config`,
     `${PREFIX}config corpus`,

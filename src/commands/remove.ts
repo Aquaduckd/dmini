@@ -15,6 +15,7 @@ export const removeCommand: Command = {
   name: "remove",
   description: "Delete one of your layouts from the catalog",
   usage: `${PREFIX}remove <name>`,
+  group: "Editing",
   examples: [`${PREFIX}remove mylayout`],
   async execute({ message, args }) {
     const name = args.trim();

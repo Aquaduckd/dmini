@@ -149,6 +149,7 @@ export const layoutsCommand: Command = {
   name: "layouts",
   description: "List layouts, optionally filtered by author or name",
   usage: `${PREFIX}layouts [author] [--search QUERY] [--sort name|likes] [--limit N] [--page N]`,
+  group: "Layouts",
   examples: [
     `${PREFIX}layouts`,
     `${PREFIX}layouts --sort likes`,

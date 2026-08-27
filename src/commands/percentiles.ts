@@ -27,6 +27,7 @@ export const percentilesCommand: Command = {
   name: "percentiles",
   description: "Show layout stat percentiles against the corpus",
   usage: `${PREFIX}percentiles <name> [--corpus <name>]`,
+  group: "Analysis",
   examples: [
     `${PREFIX}percentiles qwerty`,
     `${PREFIX}percentiles gallium --corpus monkeyracer`,

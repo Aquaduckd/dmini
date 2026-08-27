@@ -29,6 +29,7 @@ export const copyCommand: Command = {
   name: "copy",
   description: "Copy a layout under a new name",
   usage: `${PREFIX}copy <layout> <copy-name>`,
+  group: "Editing",
   examples: [`${PREFIX}copy sturdy my-sturdy`],
   async execute({ message, args }) {
     const parts = args.trim().split(/\s+/).filter(Boolean);

@@ -21,6 +21,7 @@ export const renameCommand: Command = {
   name: "rename",
   description: "Rename one of your layouts",
   usage: `${PREFIX}rename <old-name> <new-name>`,
+  group: "Editing",
   examples: [`${PREFIX}rename mylayout mylayout-v2`],
   async execute({ message, args }) {
     const parts = args.trim().split(/\s+/).filter(Boolean);

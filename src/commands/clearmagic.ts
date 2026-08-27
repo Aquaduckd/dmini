@@ -15,6 +15,7 @@ export const clearmagicCommand: Command = {
   name: "clearmagic",
   description: "Remove all magic rules from one of your layouts",
   usage: `${PREFIX}clearmagic <layout>`,
+  group: "Editing",
   examples: [`${PREFIX}clearmagic opal`],
   async execute({ message, args }) {
     const layoutName = args.trim();

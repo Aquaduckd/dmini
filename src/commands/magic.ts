@@ -46,6 +46,7 @@ export const magicCommand: Command = {
   name: "magic",
   description: "Show magic rules for a layout",
   usage: `${PREFIX}magic <name> [--limit N] [--page N]`,
+  group: "Layouts",
   aliases: ["magicrules"],
   examples: [
     `${PREFIX}magic opal`,

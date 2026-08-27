@@ -20,30 +20,40 @@ import { setboardCommand } from "../commands/setboard.js";
 import { swapCommand } from "../commands/swap.js";
 import { stripPrefix } from "./constants.js";
 import { clearCommands, registerCommand } from "./registry.js";
+import type { Command } from "./types.js";
+
+// The only place commands are wired up. Help placement comes from each
+// command's own `group` field, so adding one means editing this file alone.
+const COMMANDS: Command[] = [
+  addCommand,
+  addmagicCommand,
+  analyzeCommand,
+  clearmagicCommand,
+  configCommand,
+  copyCommand,
+  debugCommand,
+  examplesCommand,
+  findCommand,
+  giftCommand,
+  helpCommand,
+  layoutCommand,
+  layoutsCommand,
+  likeCommand,
+  magicCommand,
+  percentilesCommand,
+  removeCommand,
+  renameCommand,
+  setboardCommand,
+  swapCommand,
+  unlikeCommand,
+];
 
 export function registerCommands(): void {
   clearCommands();
-  registerCommand(helpCommand);
-  registerCommand(addCommand);
-  registerCommand(addmagicCommand);
-  registerCommand(copyCommand);
-  registerCommand(removeCommand);
-  registerCommand(renameCommand);
-  registerCommand(setboardCommand);
-  registerCommand(clearmagicCommand);
-  registerCommand(swapCommand);
-  registerCommand(layoutCommand);
-  registerCommand(likeCommand);
-  registerCommand(unlikeCommand);
-  registerCommand(giftCommand);
-  registerCommand(magicCommand);
-  registerCommand(layoutsCommand);
-  registerCommand(analyzeCommand);
-  registerCommand(findCommand);
-  registerCommand(percentilesCommand);
-  registerCommand(examplesCommand);
-  registerCommand(configCommand);
-  registerCommand(debugCommand);
+
+  for (const command of COMMANDS) {
+    registerCommand(command);
+  }
 }
 
 export function parseMessage(

@@ -25,6 +25,7 @@ export const findCommand: Command = {
   name: "find",
   description: "Find corpus words matching a pattern",
   usage: `${PREFIX}find <pattern> [--limit N] [--corpus NAME]`,
+  group: "Analysis",
   notes: "Pattern is a JavaScript regular expression. Plain alphanumeric patterns use substring search.",
   examples: [
     `${PREFIX}find th`,

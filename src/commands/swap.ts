@@ -23,6 +23,7 @@ export const swapCommand: Command = {
   name: "swap",
   description: "Swap key positions on one of your layouts",
   usage: `${PREFIX}swap <layout> <swap1> [swap2] ...`,
+  group: "Editing",
   notes: "Each swap is two letters whose positions are exchanged, e.g. `sc` swaps `s` and `c`.",
   examples: [
     `${PREFIX}swap colemak sc`,

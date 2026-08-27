@@ -13,6 +13,7 @@ export const helpCommand: Command = {
   name: "help",
   description: "Show available commands or detailed help for one command",
   usage: `${PREFIX}help [command]`,
+  group: "General",
   aliases: ["commands", "h"],
   examples: [`${PREFIX}help`, `${PREFIX}help debug`],
   async execute({ message, args }) {

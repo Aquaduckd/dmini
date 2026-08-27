@@ -27,6 +27,7 @@ export const giftCommand: Command = {
   name: "gift",
   description: "Offer one of your layouts to another author",
   usage: `${PREFIX}gift <username> <layout> | ${PREFIX}gift accept <username> [layout]`,
+  group: "Social",
   examples: [
     `${PREFIX}gift galileotime opal`,
     `${PREFIX}gift accept galileotime`,

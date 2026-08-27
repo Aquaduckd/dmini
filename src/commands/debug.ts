@@ -440,6 +440,7 @@ export const debugCommand: Command = {
   description: "Debug utilities for development",
   adminOnly: true,
   usage: `${PREFIX}debug <subcommand> [args]`,
+  group: "Admin",
   examples: [
     `${PREFIX}debug layout qwerty`,
     `${PREFIX}debug analyze qwerty`,

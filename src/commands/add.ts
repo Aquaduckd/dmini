@@ -61,6 +61,7 @@ export const addCommand: Command = {
   name: "add",
   description: "Add a new keyboard layout to the catalog",
   usage: `${PREFIX}add <name> [--board <type>]`,
+  group: "Editing",
   notes: [
     "Include the key matrix in a fenced code block:",
     "```",

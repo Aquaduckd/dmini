@@ -35,6 +35,7 @@ export const setboardCommand: Command = {
   name: "setboard",
   description: "Set a layout's board type and finger assignments",
   usage: `${PREFIX}setboard <name> [--board <type>]`,
+  group: "Editing",
   notes: [
     "Apply a default finger map with --board, or pass a custom grid in a fenced code block:",
     "```",

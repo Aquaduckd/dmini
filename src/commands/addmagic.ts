@@ -29,6 +29,7 @@ export const addmagicCommand: Command = {
   name: "addmagic",
   description: "Set or append magic rules on one of your layouts",
   usage: `${PREFIX}addmagic <layout> [--append]`,
+  group: "Editing",
   notes: [
     "Include rules in a fenced code block, one per line:",
     "```",

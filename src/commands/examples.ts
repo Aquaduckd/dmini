@@ -82,6 +82,7 @@ export const examplesCommand: Command = {
   name: "examples",
   description: "Show corpus examples for a layout stat",
   usage: `${PREFIX}examples <stat> <layout> [--limit N] [--page N] [--corpus NAME]`,
+  group: "Analysis",
   aliases: ["ex"],
   examples: [
     `${PREFIX}examples sfb qwerty`,

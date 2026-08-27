@@ -1,17 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { infoEmbed, replyEmbed } from "../discord/embeds.js";
 import { PREFIX } from "./constants.js";
-import type { Command, CommandContext } from "./types.js";
-
-const HELP_GROUPS: { label: string; names: string[] }[] = [
-  { label: "General", names: ["help"] },
-  { label: "Layouts", names: ["layout", "layouts", "magic"] },
-  { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
-  { label: "Social", names: ["like", "unlike", "gift"] },
-  { label: "Analysis", names: ["analyze", "find", "percentiles", "examples"] },
-  { label: "Settings", names: ["config"] },
-  { label: "Admin", names: ["debug"] },
-];
+import { COMMAND_GROUPS, type Command, type CommandContext } from "./types.js";
 
 function formatCommandName(command: Command): string {
   return `\`${PREFIX}${command.name}\``;
@@ -25,38 +15,19 @@ function addGroupedCommandFields(
   embed: EmbedBuilder,
   commands: Command[],
 ): void {
-  const byName = new Map(commands.map((command) => [command.name, command]));
-  const grouped = new Set<string>();
-
-  for (const group of HELP_GROUPS) {
-    const groupCommands = group.names
-      .map((name) => byName.get(name))
-      .filter((command): command is Command => command !== undefined);
-
-    for (const command of groupCommands) {
-      grouped.add(command.name);
-    }
+  for (const group of COMMAND_GROUPS) {
+    const groupCommands = commands.filter(
+      (command) => command.group === group,
+    );
 
     if (groupCommands.length === 0) continue;
 
     embed.addFields({
-      name: group.label,
+      name: group,
       value: formatCommandList(groupCommands),
       inline: false,
     });
   }
-
-  const other = commands
-    .filter((command) => !grouped.has(command.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  if (other.length === 0) return;
-
-  embed.addFields({
-    name: "Other",
-    value: formatCommandList(other),
-    inline: false,
-  });
 }
 
 export async function replyUsage(
