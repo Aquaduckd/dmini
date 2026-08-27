@@ -11,7 +11,7 @@ import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
-import { isStaggeredBoard, layoutLikeCount, layoutToRenderKeys, formatLikeCount } from "../layout/types.js";
+import { isStaggeredBoard, layoutLikeCount, layoutToRenderKeys, formatLikeCount, formatLayoutCreatedAt } from "../layout/types.js";
 import { buildHeatContext } from "../render/heatmap.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
@@ -87,6 +87,10 @@ export const layoutCommand: Command = {
       }
 
       const footerParts = [formatLikeCount(layoutLikeCount(layout))];
+      const createdAt = formatLayoutCreatedAt(layout.created_at);
+      if (createdAt) {
+        footerParts.push(createdAt);
+      }
       if (renderMode === "heatmap" && corpus) {
         footerParts.push(`Heatmap · ${corpus} corpus`);
       }

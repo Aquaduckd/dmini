@@ -17,6 +17,7 @@ export interface LayoutDoc {
   user?: string | number;
   likes?: Array<string | number>;
   link?: string;
+  created_at?: string;
   modified_at?: string;
   magic?: LayoutMagicRule[];
 }
@@ -27,6 +28,15 @@ export function layoutLikeCount(layout: LayoutDoc): number {
 
 export function formatLikeCount(count: number): string {
   return count === 1 ? "1 like" : `${count} likes`;
+}
+
+export function formatLayoutCreatedAt(createdAt?: string): string | undefined {
+  if (!createdAt?.trim()) return undefined;
+
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return `Created ${date.toISOString().slice(0, 10)}`;
 }
 
 export interface RenderKey {

@@ -125,6 +125,7 @@ export const analyzeCommand: Command = {
         author,
         layoutLikeCount(layout),
         percentileTable?.stats,
+        layout.created_at,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });
