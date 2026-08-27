@@ -7,6 +7,7 @@ import {
 import { PREFIX, stripPrefix } from "../command/constants.js";
 import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
+import { resolveCommandName } from "../command/registry.js";
 import type { Command } from "../command/types.js";
 import { DEFAULT_BOARD, formatBoardList, parseBoard } from "../layout/board.js";
 import { MatrixParseError, parseLayoutMatrix } from "../layout/matrix.js";
@@ -40,7 +41,7 @@ function parseAddInput(
 
   const body = rest.trim();
   const space = body.indexOf(" ");
-  if (space === -1 || body.slice(0, space).toLowerCase() !== "add") {
+  if (space === -1 || resolveCommandName(body.slice(0, space)) !== "add") {
     return null;
   }
 
