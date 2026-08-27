@@ -4,7 +4,7 @@ import { PREFIX } from "./constants.js";
 import type { Command, CommandContext } from "./types.js";
 
 const HELP_GROUPS: { label: string; names: string[] }[] = [
-  { label: "General", names: ["help"] },
+  { label: "General", names: ["help", "about"] },
   { label: "Layouts", names: ["layout", "layouts", "magic"] },
   { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
   { label: "Social", names: ["like", "unlike", "gift"] },

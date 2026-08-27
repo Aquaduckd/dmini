@@ -1,3 +1,4 @@
+import { aboutCommand } from "../commands/about.js";
 import { addmagicCommand } from "../commands/addmagic.js";
 import { addCommand } from "../commands/add.js";
 import { analyzeCommand } from "../commands/analyze.js";
@@ -23,6 +24,7 @@ import { clearCommands, registerCommand } from "./registry.js";
 export function registerCommands(): void {
   clearCommands();
   registerCommand(helpCommand);
+  registerCommand(aboutCommand);
   registerCommand(addCommand);
   registerCommand(addmagicCommand);
   registerCommand(copyCommand);
