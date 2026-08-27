@@ -4,3 +4,4 @@ dist/
 .dmini/
 *.log
 .DS_Store
+.direnv
