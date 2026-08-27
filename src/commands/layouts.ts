@@ -23,7 +23,8 @@ export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
 export const MAX_LAYOUT_LIST_LIMIT = 50;
 export const ROW_INDENT = "  ";
 
-export type LayoutSort = "name" | "likes";
+export type LayoutSort = "name" | "likes" | "created" | "modified";
+export type LayoutSortDirection = "asc" | "desc";
 
 interface LayoutListScope {
   label: string;
@@ -31,8 +32,30 @@ interface LayoutListScope {
   userId?: string;
 }
 
-const NAME_LIKES_GAP = "  ";
+const NAME_COLUMN_GAP = "  ";
 const MAX_LAYOUT_NAME_LENGTH = 32;
+
+const SORT_LABELS: Record<Exclude<LayoutSort, "name">, string> = {
+  likes: "likes",
+  created: "created",
+  modified: "modified",
+};
+
+function layoutTimestamp(value?: string): number {
+  if (!value?.trim()) return 0;
+
+  const ms = Date.parse(value);
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+function formatLayoutDate(value?: string): string {
+  if (!value?.trim()) return "—";
+
+  const ms = Date.parse(value);
+  if (Number.isNaN(ms)) return "—";
+
+  return new Date(ms).toISOString().slice(0, 10);
+}
 
 export function displayLayoutName(name: string): string {
   if (name.length <= MAX_LAYOUT_NAME_LENGTH) return name;
@@ -54,7 +77,11 @@ function parseLayoutSort(value?: string): LayoutSort {
   const normalized = value?.trim().toLowerCase();
   if (!normalized || normalized === "name") return "name";
   if (normalized === "likes") return "likes";
-  throw new FlagParseError("Sort must be `name` or `likes`.");
+  if (normalized === "created" || normalized === "created_at") return "created";
+  if (normalized === "modified" || normalized === "modified_at") return "modified";
+  throw new FlagParseError(
+    "Sort must be `name`, `likes`, `created`, or `modified`.",
+  );
 }
 
 function filterLayoutsBySearch(
@@ -66,15 +93,55 @@ function filterLayoutsBySearch(
   return layouts.filter((layout) => layoutMatchesSearch(layout.name, trimmed));
 }
 
-function sortLayouts(layouts: LayoutSummary[], sort: LayoutSort): LayoutSummary[] {
+function defaultSortDirection(sort: LayoutSort): LayoutSortDirection {
+  return sort === "name" ? "asc" : "desc";
+}
+
+function parseSortDirection(
+  asc?: boolean,
+  desc?: boolean,
+  sort: LayoutSort = "name",
+): LayoutSortDirection {
+  if (asc && desc) {
+    throw new FlagParseError("Use only one of --asc or --desc.");
+  }
+  if (asc) return "asc";
+  if (desc) return "desc";
+  return defaultSortDirection(sort);
+}
+
+function comparePrimary(
+  a: LayoutSummary,
+  b: LayoutSummary,
+  sort: LayoutSort,
+): number {
   if (sort === "likes") {
-    return [...layouts].sort((a, b) => {
-      const diff = (b.like_count ?? 0) - (a.like_count ?? 0);
-      return diff !== 0 ? diff : a.name.localeCompare(b.name);
-    });
+    return (a.like_count ?? 0) - (b.like_count ?? 0);
   }
 
-  return [...layouts].sort((a, b) => a.name.localeCompare(b.name));
+  if (sort === "created") {
+    return layoutTimestamp(a.created_at) - layoutTimestamp(b.created_at);
+  }
+
+  if (sort === "modified") {
+    return layoutTimestamp(a.modified_at) - layoutTimestamp(b.modified_at);
+  }
+
+  return a.name.localeCompare(b.name);
+}
+
+function sortLayouts(
+  layouts: LayoutSummary[],
+  sort: LayoutSort,
+  direction: LayoutSortDirection,
+): LayoutSummary[] {
+  return [...layouts].sort((a, b) => {
+    const diff = comparePrimary(a, b, sort);
+    if (diff !== 0) {
+      return direction === "desc" ? -diff : diff;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 export function paginateLayouts(
@@ -106,17 +173,22 @@ function formatLayoutListText(
   page: number,
   pageCount: number,
   sort: LayoutSort,
+  direction: LayoutSortDirection,
 ): string {
-  const header =
-    sort === "likes"
-      ? `${scopeLabel} · likes · page ${page}/${pageCount}`
-      : `${scopeLabel} · page ${page}/${pageCount}`;
+  const sortLabel = sort === "name" ? undefined : SORT_LABELS[sort];
+  const directionLabel =
+    direction === defaultSortDirection(sort) ? undefined : direction;
+  const headerParts = [scopeLabel];
+  if (sortLabel) headerParts.push(sortLabel);
+  if (directionLabel) headerParts.push(directionLabel);
+  headerParts.push(`page ${page}/${pageCount}`);
+  const header = headerParts.join(" · ");
 
   if (layouts.length === 0) {
     return [header, `${ROW_INDENT}(no layouts)`].join("\n");
   }
 
-  if (sort !== "likes") {
+  if (sort === "name") {
     const body = layouts
       .map((layout) => `${ROW_INDENT}${displayLayoutName(layout.name)}`)
       .join("\n");
@@ -125,15 +197,18 @@ function formatLayoutListText(
 
   const names = layouts.map((layout) => displayLayoutName(layout.name));
   const nameWidth = Math.max(0, ...names.map((name) => name.length));
-  const likesWidth = Math.max(
-    1,
-    ...layouts.map((layout) => String(layout.like_count ?? 0).length),
-  );
+  const valueForLayout = (layout: LayoutSummary): string => {
+    if (sort === "likes") return String(layout.like_count ?? 0);
+    if (sort === "created") return formatLayoutDate(layout.created_at);
+    return formatLayoutDate(layout.modified_at);
+  };
+  const values = layouts.map(valueForLayout);
+  const valueWidth = Math.max(1, ...values.map((value) => value.length));
 
   const body = layouts
     .map((layout, index) => {
-      const likes = String(layout.like_count ?? 0);
-      return `${ROW_INDENT}${names[index]!.padEnd(nameWidth)}${NAME_LIKES_GAP}${likes.padStart(likesWidth)}`;
+      const value = values[index]!;
+      return `${ROW_INDENT}${names[index]!.padEnd(nameWidth)}${NAME_COLUMN_GAP}${value.padStart(valueWidth)}`;
     })
     .join("\n");
 
@@ -149,10 +224,13 @@ function listQuery(scope: LayoutListScope, limit: number, offset: number) {
 export const layoutsCommand: Command = {
   name: "layouts",
   description: "List layouts, optionally filtered by author or name",
-  usage: `${PREFIX}layouts [author] [--search QUERY] [--sort name|likes] [--limit N] [--page N]`,
+  usage: `${PREFIX}layouts [author] [--search QUERY] [--sort name|likes|created|modified] [--asc|--desc] [--limit N] [--page N]`,
   examples: [
     `${PREFIX}layouts`,
     `${PREFIX}layouts --sort likes`,
+    `${PREFIX}layouts --sort created`,
+    `${PREFIX}layouts --sort created --asc`,
+    `${PREFIX}layouts --sort modified --desc`,
     `${PREFIX}layouts --search opal`,
     `${PREFIX}layouts galileotime`,
     `${PREFIX}layouts galileotime --search sturdy --sort likes --page 2`,
@@ -163,9 +241,13 @@ export const layoutsCommand: Command = {
     let limit = DEFAULT_LAYOUT_LIST_LIMIT;
     let page = 1;
     let sort: LayoutSort = "name";
+    let sortDirection: LayoutSortDirection = "asc";
+    let directionExplicit = false;
 
     try {
       const { positional, flags } = parseCommandArgs(args, {
+        asc: true,
+        desc: true,
         limit: true,
         page: true,
         search: true,
@@ -183,6 +265,8 @@ export const layoutsCommand: Command = {
       if (flags.limit !== undefined) limit = flags.limit;
       if (flags.page !== undefined) page = flags.page;
       sort = parseLayoutSort(flags.sort);
+      directionExplicit = Boolean(flags.asc || flags.desc);
+      sortDirection = parseSortDirection(flags.asc, flags.desc, sort);
     } catch (error) {
       if (error instanceof FlagParseError) {
         await replyEmbed(message, errorEmbed(error.message));
@@ -233,7 +317,10 @@ export const layoutsCommand: Command = {
         };
       }
 
-      const useClientList = sort === "likes" || Boolean(searchQuery);
+      const useClientList =
+        sort !== "name" ||
+        Boolean(searchQuery) ||
+        sortDirection !== defaultSortDirection(sort);
       let layouts: LayoutSummary[];
       let total: number;
 
@@ -242,7 +329,7 @@ export const layoutsCommand: Command = {
         if (searchQuery) {
           layouts = filterLayoutsBySearch(layouts, searchQuery);
         }
-        layouts = sortLayouts(layouts, sort);
+        layouts = sortLayouts(layouts, sort, sortDirection);
         total = layouts.length;
       } else {
         const response = await listQuery(scope, limit, (page - 1) * limit);
@@ -287,6 +374,7 @@ export const layoutsCommand: Command = {
         safePage,
         pageCount,
         sort,
+        sortDirection,
       );
 
       if (!fitsInCodeBlock(text)) {
@@ -306,6 +394,7 @@ export const layoutsCommand: Command = {
           safePage,
           reduced.pageCount,
           sort,
+          sortDirection,
         );
 
         if (!fitsInCodeBlock(text)) {
@@ -319,12 +408,16 @@ export const layoutsCommand: Command = {
         }
       }
 
-      const footerSort = sort === "likes" ? " · likes" : "";
+      const footerSort = sort === "name" ? "" : ` · ${SORT_LABELS[sort]}`;
+      const footerDirection =
+        directionExplicit || sortDirection !== defaultSortDirection(sort)
+          ? ` · ${sortDirection}`
+          : "";
 
       await replyEmbed(
         message,
         infoEmbed(`Layouts · ${scope.title}`, textCodeBlock(text)).setFooter({
-          text: `Page ${safePage}/${pageCount} · ${limit} per page · ${total} total${footerSort}`,
+          text: `Page ${safePage}/${pageCount} · ${limit} per page · ${total} total${footerSort}${footerDirection}`,
         }),
       );
     } catch (error) {

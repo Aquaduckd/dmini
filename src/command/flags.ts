@@ -2,8 +2,10 @@ import type { RenderMode } from "../config/user.js";
 
 export interface CommandFlags {
   append?: boolean;
+  asc?: boolean;
   board?: string;
   corpus?: string;
+  desc?: boolean;
   layoutFilter?: "magic" | "thumb" | "regular";
   limit?: number;
   page?: number;
@@ -14,8 +16,10 @@ export interface CommandFlags {
 
 export interface ParseFlagsOptions {
   append?: boolean;
+  asc?: boolean;
   board?: boolean;
   corpus?: boolean;
+  desc?: boolean;
   layoutFilter?: boolean;
   limit?: boolean;
   page?: boolean;
@@ -37,6 +41,22 @@ export function parseCommandArgs(
 
     if (options.append && part === "--append") {
       flags.append = true;
+      continue;
+    }
+
+    if (options.asc && part === "--asc") {
+      if (flags.desc) {
+        throw new FlagParseError("Use only one of --asc or --desc.");
+      }
+      flags.asc = true;
+      continue;
+    }
+
+    if (options.desc && part === "--desc") {
+      if (flags.asc) {
+        throw new FlagParseError("Use only one of --asc or --desc.");
+      }
+      flags.desc = true;
       continue;
     }
 
