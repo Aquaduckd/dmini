@@ -222,11 +222,12 @@ export async function loadResolvedCorpusPercentileCutoffs(
 }
 
 export class PercentileCutoffsMissingError extends Error {
+  readonly corpus: string;
+
   constructor(corpus: string) {
-    super(
-      `No percentile cutoffs found for corpus \`${corpus}\`. Run \`${PREFIX}debug cache warm ${corpus}\`, then \`${PREFIX}debug percentiles ${corpus}\`.`,
-    );
+    super(`Percentile cutoffs missing for corpus ${corpus}`);
     this.name = "PercentileCutoffsMissingError";
+    this.corpus = corpus;
   }
 }
 

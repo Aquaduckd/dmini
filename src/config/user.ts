@@ -4,6 +4,7 @@ import {
   DEFAULT_FINGER_PALETTE,
   type FingermapPaletteId,
 } from "../render/fingermap.js";
+import { isAdmin } from "./admins.js";
 import { resolveDownloadedCorpus } from "../mana2/corpus.js";
 
 export type RenderMode = "fingermap" | "heatmap";
@@ -112,14 +113,16 @@ export async function resolveCorpus(
   userId: string,
   override?: string,
 ): Promise<string> {
+  const userIsAdmin = await isAdmin(userId);
+
   if (override?.trim()) {
-    return resolveDownloadedCorpus(override);
+    return resolveDownloadedCorpus(override, userIsAdmin);
   }
 
   const settings = await getUserSettings(userId);
   if (settings.corpus?.trim()) {
-    return resolveDownloadedCorpus(settings.corpus);
+    return resolveDownloadedCorpus(settings.corpus, userIsAdmin);
   }
 
-  return resolveDownloadedCorpus(BOT_DEFAULT_CORPUS);
+  return resolveDownloadedCorpus(BOT_DEFAULT_CORPUS, userIsAdmin);
 }

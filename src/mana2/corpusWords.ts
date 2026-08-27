@@ -110,7 +110,7 @@ async function saveDminiWordsCache(
 
 export async function loadCorpusWords(
   corpus: string,
-  options: { mana2Root?: string } = {},
+  options: { mana2Root?: string; isAdmin?: boolean } = {},
 ): Promise<WordWithFreq[]> {
   const cached = wordsCache.get(corpus);
   if (cached) return cached;
@@ -138,7 +138,9 @@ export async function loadCorpusWords(
   const rawPath = path.join(mana2Root, "data", "corpus_raw", corpus);
   if (!(await pathExists(rawPath))) {
     throw new CorpusError(
-      `Corpus \`${corpus}\` is not available locally. An admin can fetch it with \`${PREFIX}debug corpus get ${corpus}\`.`,
+      options.isAdmin
+        ? `Corpus \`${corpus}\` is not available locally. Run \`${PREFIX}debug corpus get ${corpus}\`.`
+        : `Corpus \`${corpus}\` is not available locally. Ask a server admin to fetch it.`,
     );
   }
 

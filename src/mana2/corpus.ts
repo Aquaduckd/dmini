@@ -49,7 +49,10 @@ export async function listCorpora(
   return { downloaded, available };
 }
 
-export async function resolveDownloadedCorpus(name: string): Promise<string> {
+export async function resolveDownloadedCorpus(
+  name: string,
+  isAdmin = false,
+): Promise<string> {
   const trimmed = name.trim();
   if (!trimmed) {
     throw new CorpusError("Corpus name cannot be empty.");
@@ -68,7 +71,9 @@ export async function resolveDownloadedCorpus(name: string): Promise<string> {
 
   if (pending) {
     throw new CorpusError(
-      `Corpus \`${trimmed}\` is not downloaded. An admin can fetch it with \`${PREFIX}debug corpus get ${pending}\`.`,
+      isAdmin
+        ? `Corpus \`${trimmed}\` is not downloaded. Run \`${PREFIX}debug corpus get ${pending}\`.`
+        : `Corpus \`${trimmed}\` is not downloaded. Ask a server admin to fetch it.`,
     );
   }
 

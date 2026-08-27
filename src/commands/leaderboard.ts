@@ -3,6 +3,7 @@ import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { resolveCorpus } from "../config/user.js";
+import { isAdmin } from "../config/admins.js";
 import {
   errorEmbed,
   fitsInCodeBlock,
@@ -86,7 +87,7 @@ export const leaderboardCommand: Command = {
   description: "Rank layouts by a stat or overall average percentile",
   usage: `${PREFIX}leaderboard [stat] [--magic|--thumb|--regular] [--corpus NAME] [--limit N] [--page N]`,
   notes:
-    "Omit the stat for overall ranking (average percentile across bigram and trigram stats). Requires a warmed analysis cache and built percentile cutoffs (`debug percentiles`).",
+    "Omit the stat for overall ranking (average percentile across bigram and trigram stats). Requires a warmed analysis cache and percentile cutoffs built by a server admin.",
   examples: [
     `${PREFIX}leaderboard sfb`,
     `${PREFIX}leaderboard roll --thumb`,
@@ -151,6 +152,7 @@ export const leaderboardCommand: Command = {
     }
 
     try {
+      const userIsAdmin = await isAdmin(message.author.id);
       const offset = (page - 1) * limit;
       const result = await buildLeaderboard({
         corpus,
@@ -162,12 +164,11 @@ export const leaderboardCommand: Command = {
 
       if (!result) {
         const filterLabel = leaderboardFilterLabel(layoutFilter ?? "all");
-        await replyEmbed(
-          message,
-          errorEmbed(
-            `No cached layouts found for corpus \`${corpus}\`${layoutFilter ? ` (${filterLabel})` : ""}. Run \`${PREFIX}debug cache warm ${corpus}\` first.`,
-          ),
-        );
+        const filterSuffix = layoutFilter ? ` (${filterLabel})` : "";
+        const cacheMessage = userIsAdmin
+          ? `No cached layouts found for corpus \`${corpus}\`${filterSuffix}. Run \`${PREFIX}debug cache warm ${corpus}\` first.`
+          : `Analysis cache isn't ready for corpus \`${corpus}\`${filterSuffix} yet. Ask a server admin to warm it.`;
+        await replyEmbed(message, errorEmbed(cacheMessage));
         return;
       }
 
@@ -193,7 +194,11 @@ export const leaderboardCommand: Command = {
       await replyEmbed(message, infoEmbed("Leaderboard", text));
     } catch (error) {
       if (error instanceof PercentileCutoffsMissingError) {
-        await replyEmbed(message, errorEmbed(error.message));
+        const userIsAdmin = await isAdmin(message.author.id);
+        const messageText = userIsAdmin
+          ? `No percentile cutoffs found for corpus \`${error.corpus}\`. Run \`${PREFIX}debug cache warm ${error.corpus}\`, then \`${PREFIX}debug percentiles ${error.corpus}\`.`
+          : `Percentile data isn't available for corpus \`${error.corpus}\` yet. Ask a server admin to rebuild it.`;
+        await replyEmbed(message, errorEmbed(messageText));
         return;
       }
 

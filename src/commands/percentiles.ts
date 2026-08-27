@@ -6,6 +6,7 @@ import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import type { Command } from "../command/types.js";
 import { replyUsage } from "../command/format.js";
 import { resolveCorpus, resolveFingermapPalette, resolveRenderMode } from "../config/user.js";
+import { isAdmin } from "../config/admins.js";
 import { errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
@@ -99,12 +100,11 @@ export const percentilesCommand: Command = {
       ]);
 
       if (!percentileTable) {
-        await replyEmbed(
-          message,
-          errorEmbed(
-            `No percentile cutoffs found for corpus \`${corpus}\`. Run \`${PREFIX}debug cache warm ${corpus}\`, then \`${PREFIX}debug percentiles ${corpus}\`.`,
-          ),
-        );
+        const userIsAdmin = await isAdmin(message.author.id);
+        const messageText = userIsAdmin
+          ? `No percentile cutoffs found for corpus \`${corpus}\`. Run \`${PREFIX}debug cache warm ${corpus}\`, then \`${PREFIX}debug percentiles ${corpus}\`.`
+          : `Percentile data isn't available for corpus \`${corpus}\` yet. Ask a server admin to rebuild it.`;
+        await replyEmbed(message, errorEmbed(messageText));
         return;
       }
 

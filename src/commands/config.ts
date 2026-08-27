@@ -15,6 +15,7 @@ import {
   setUserRenderMode,
 } from "../config/user.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { isAdmin } from "../config/admins.js";
 import { CorpusError, listCorpora, resolveDownloadedCorpus } from "../mana2/corpus.js";
 import {
   DEFAULT_FINGER_PALETTE,
@@ -215,10 +216,15 @@ export const configCommand: Command = {
     }
 
     if (positional.length === 1) {
-      const [corpora, effectiveCorpus] = await Promise.all([
+      const [corpora, effectiveCorpus, userIsAdmin] = await Promise.all([
         listCorpora(),
         resolveCorpus(userId),
+        isAdmin(userId),
       ]);
+
+      const corpusFooter = userIsAdmin
+        ? `Need another corpus? Use \`${PREFIX}debug corpus get <name>\`.`
+        : "Need another corpus? Ask a server admin to download it.";
 
       await replyEmbed(
         message,
@@ -230,7 +236,7 @@ export const configCommand: Command = {
             formatCorpusList("Downloaded", corpora.downloaded),
             "",
             `Set yours with \`${PREFIX}config corpus <name>\`.`,
-            `Need another corpus? Use \`${PREFIX}debug corpus get <name>\`.`,
+            corpusFooter,
           ].join("\n"),
         ),
       );

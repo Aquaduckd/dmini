@@ -3,6 +3,7 @@ import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { resolveCorpus } from "../config/user.js";
+import { isAdmin } from "../config/admins.js";
 import {
   errorEmbed,
   fitsInCodeBlock,
@@ -74,7 +75,8 @@ export const findCommand: Command = {
     }
 
     try {
-      const words = await loadCorpusWords(corpus);
+      const userIsAdmin = await isAdmin(message.author.id);
+      const words = await loadCorpusWords(corpus, { isAdmin: userIsAdmin });
       const result = searchCorpusWords(words, pattern, limit);
 
       if (result.matches.length === 0) {
