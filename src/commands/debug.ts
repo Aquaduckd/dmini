@@ -10,6 +10,7 @@ import {
   layoutJsonEmbed,
   replyEmbed,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { analyzeLayoutRaw, Mana2Error } from "../mana2/analyze.js";
 import {
   ANALYZER_VERSION,
@@ -67,15 +68,21 @@ async function handleLayoutJson(message: Message, name: string): Promise<void> {
     }
 
     if (error instanceof LayoutApiError) {
-      await replyEmbed(
+      await replyLoggedError(
         message,
-        errorEmbed(`API error (${error.status}): ${error.message}`),
+        "Failed to fetch layout:",
+        error,
+        "Failed to fetch layout",
       );
       return;
     }
 
-    console.error("Failed to fetch layout:", error);
-    await replyEmbed(message, errorEmbed("Failed to fetch layout."));
+    await replyLoggedError(
+      message,
+      "Failed to fetch layout:",
+      error,
+      "Failed to fetch layout",
+    );
   }
 }
 
@@ -124,21 +131,22 @@ async function handleAnalyze(message: Message, name: string): Promise<void> {
       return;
     }
 
-    if (error instanceof LayoutApiError) {
-      await replyEmbed(
+    if (error instanceof LayoutApiError || error instanceof Mana2Error) {
+      await replyLoggedError(
         message,
-        errorEmbed(`API error (${error.status}): ${error.message}`),
+        "Failed to analyze layout:",
+        error,
+        "Failed to analyze layout",
       );
       return;
     }
 
-    if (error instanceof Mana2Error) {
-      await replyEmbed(message, errorEmbed(error.message));
-      return;
-    }
-
-    console.error("Failed to analyze layout:", error);
-    await replyEmbed(message, errorEmbed("Failed to analyze layout."));
+    await replyLoggedError(
+      message,
+      "Failed to analyze layout:",
+      error,
+      "Failed to analyze layout",
+    );
   }
 }
 
@@ -222,8 +230,12 @@ async function handleCorpus(message: Message, args: string): Promise<void> {
 
       await replyEmbed(message, infoEmbed("Corpora downloaded", lines.join("\n")));
     } catch (error) {
-      console.error("Failed to download all corpora:", error);
-      await replyEmbed(message, errorEmbed("Failed to download corpora."));
+      await replyLoggedError(
+        message,
+        "Failed to download all corpora:",
+        error,
+        "Failed to download corpora",
+      );
     }
     return;
   }
@@ -240,8 +252,12 @@ async function handleCorpus(message: Message, args: string): Promise<void> {
       return;
     }
 
-    console.error("Failed to download corpus:", error);
-    await replyEmbed(message, errorEmbed("Failed to download corpus."));
+    await replyLoggedError(
+      message,
+      "Failed to download corpus:",
+      error,
+      "Failed to download corpus",
+    );
   }
 }
 
@@ -304,8 +320,12 @@ async function handleCache(message: Message, args: string): Promise<void> {
       if (results.some((result) => result.errors.length > 0)) {
         lines.push("", "**Failures**");
         for (const result of results) {
-          for (const error of result.errors.slice(0, 5)) {
-            lines.push(`- \`${error.layout}\`: ${error.message}`);
+          for (const failure of result.errors.slice(0, 5)) {
+            console.error(
+              `Cache warm failed for ${failure.layout} (${result.corpus}):`,
+              failure.message,
+            );
+            lines.push(`- \`${failure.layout}\`: failed (see logs)`);
           }
           if (result.errors.length > 5) {
             lines.push(`- …and ${result.errors.length - 5} more`);
@@ -320,8 +340,12 @@ async function handleCache(message: Message, args: string): Promise<void> {
         return;
       }
 
-      console.error("Failed to warm analysis cache:", error);
-      await replyEmbed(message, errorEmbed("Failed to warm analysis cache."));
+      await replyLoggedError(
+        message,
+        "Failed to warm analysis cache:",
+        error,
+        "Failed to warm analysis cache",
+      );
     }
     return;
   }
@@ -364,13 +388,12 @@ async function handlePercentiles(message: Message, args: string): Promise<void> 
       return;
     }
 
-    if (error instanceof Error) {
-      await replyEmbed(message, errorEmbed(error.message));
-      return;
-    }
-
-    console.error("Failed to build percentile cutoffs:", error);
-    await replyEmbed(message, errorEmbed("Failed to build percentile cutoffs."));
+    await replyLoggedError(
+      message,
+      "Failed to build percentile cutoffs:",
+      error,
+      "Failed to build percentile cutoffs",
+    );
   }
 }
 

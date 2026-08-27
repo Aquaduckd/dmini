@@ -16,6 +16,7 @@ import {
 } from "../layout/name.js";
 import { layoutOwnedByUser } from "../layout/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const renameCommand: Command = {
   name: "rename",
@@ -83,8 +84,12 @@ export const renameCommand: Command = {
         return;
       }
 
-      console.error("Failed to rename layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to rename layout."));
+      await replyLoggedError(
+        message,
+        "Failed to rename layout:",
+        error,
+        "Failed to rename layout",
+      );
       return;
     }
 

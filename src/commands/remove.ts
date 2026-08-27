@@ -10,6 +10,7 @@ import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { layoutOwnedByUser } from "../layout/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const removeCommand: Command = {
   name: "remove",
@@ -51,8 +52,12 @@ export const removeCommand: Command = {
         return;
       }
 
-      console.error("Failed to remove layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to remove layout."));
+      await replyLoggedError(
+        message,
+        "Failed to remove layout:",
+        error,
+        "Failed to remove layout",
+      );
       return;
     }
 

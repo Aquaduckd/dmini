@@ -7,6 +7,7 @@ import type { Command } from "../command/types.js";
 import { replyUsage } from "../command/format.js";
 import { resolveCorpus, resolveFingermapPalette, resolveRenderMode } from "../config/user.js";
 import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
@@ -98,21 +99,27 @@ export const layoutCommand: Command = {
         return;
       }
 
-      if (error instanceof LayoutApiError) {
-        await replyEmbed(
-          message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
-        );
-        return;
-      }
-
-      if (error instanceof CorpusError || error instanceof Mana2Error) {
+      if (error instanceof CorpusError) {
         await replyEmbed(message, errorEmbed(error.message));
         return;
       }
 
-      console.error("Failed to render layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to render layout."));
+      if (error instanceof LayoutApiError || error instanceof Mana2Error) {
+        await replyLoggedError(
+          message,
+          "Failed to render layout:",
+          error,
+          "Failed to render layout",
+        );
+        return;
+      }
+
+      await replyLoggedError(
+        message,
+        "Failed to render layout:",
+        error,
+        "Failed to render layout",
+      );
     }
   },
 };

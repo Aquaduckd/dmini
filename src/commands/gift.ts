@@ -14,6 +14,7 @@ import { PREFIX } from "../command/constants.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import {
   createPendingGift,
   findPendingGiftsFromSender,
@@ -251,6 +252,10 @@ async function handleGiftError(
     return;
   }
 
-  console.error(`Failed to ${action} layout gift:`, error);
-  await replyEmbed(message, errorEmbed(`Failed to ${action} layout gift.`));
+  await replyLoggedError(
+    message,
+    `Failed to ${action} layout gift:`,
+    error,
+    `Failed to ${action} layout gift`,
+  );
 }

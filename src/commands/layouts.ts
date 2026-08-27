@@ -17,6 +17,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
 export const MAX_LAYOUT_LIST_LIMIT = 50;
@@ -328,15 +329,21 @@ export const layoutsCommand: Command = {
       );
     } catch (error) {
       if (error instanceof LayoutApiError) {
-        await replyEmbed(
+        await replyLoggedError(
           message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
+          "Failed to list layouts:",
+          error,
+          "Failed to list layouts",
         );
         return;
       }
 
-      console.error("Failed to list layouts:", error);
-      await replyEmbed(message, errorEmbed("Failed to list layouts."));
+      await replyLoggedError(
+        message,
+        "Failed to list layouts:",
+        error,
+        "Failed to list layouts",
+      );
     }
   },
 };

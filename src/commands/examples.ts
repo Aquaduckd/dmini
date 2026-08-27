@@ -15,6 +15,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { CorpusError } from "../mana2/corpus.js";
 import {
@@ -186,21 +187,22 @@ export const examplesCommand: Command = {
         return;
       }
 
-      if (error instanceof LayoutApiError) {
-        await replyEmbed(
+      if (error instanceof LayoutApiError || error instanceof Mana2Error) {
+        await replyLoggedError(
           message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
+          "Failed to fetch stat examples:",
+          error,
+          "Failed to fetch stat examples",
         );
         return;
       }
 
-      if (error instanceof Mana2Error) {
-        await replyEmbed(message, errorEmbed(error.message));
-        return;
-      }
-
-      console.error("Failed to fetch stat examples:", error);
-      await replyEmbed(message, errorEmbed("Failed to fetch stat examples."));
+      await replyLoggedError(
+        message,
+        "Failed to fetch stat examples:",
+        error,
+        "Failed to fetch stat examples",
+      );
     }
   },
 };

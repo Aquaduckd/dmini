@@ -7,6 +7,7 @@ import type { Command } from "../command/types.js";
 import { replyUsage } from "../command/format.js";
 import { resolveCorpus, resolveFingermapPalette, resolveRenderMode } from "../config/user.js";
 import { errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import {
   isStaggeredBoard,
   layoutLikeCount,
@@ -133,21 +134,22 @@ export const analyzeCommand: Command = {
         return;
       }
 
-      if (error instanceof LayoutApiError) {
-        await replyEmbed(
+      if (error instanceof LayoutApiError || error instanceof Mana2Error) {
+        await replyLoggedError(
           message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
+          "Failed to analyze layout:",
+          error,
+          "Failed to analyze layout",
         );
         return;
       }
 
-      if (error instanceof Mana2Error) {
-        await replyEmbed(message, errorEmbed(error.message));
-        return;
-      }
-
-      console.error("Failed to analyze layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to analyze layout."));
+      await replyLoggedError(
+        message,
+        "Failed to analyze layout:",
+        error,
+        "Failed to analyze layout",
+      );
     }
   },
 };

@@ -13,6 +13,7 @@ import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { resolveFingermapPalette } from "../config/user.js";
 import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import {
   DEFAULT_BOARD,
   formatBoardList,
@@ -189,8 +190,12 @@ export const setboardCommand: Command = {
         return;
       }
 
-      console.error("Failed to set board:", error);
-      await replyEmbed(message, errorEmbed("Failed to update layout."));
+      await replyLoggedError(
+        message,
+        "Failed to set board:",
+        error,
+        "Failed to update layout",
+      );
     }
   },
 };

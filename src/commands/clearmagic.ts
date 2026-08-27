@@ -10,6 +10,7 @@ import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { layoutOwnedByUser } from "../layout/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const clearmagicCommand: Command = {
   name: "clearmagic",
@@ -71,8 +72,12 @@ export const clearmagicCommand: Command = {
         return;
       }
 
-      console.error("Failed to clear magic rules:", error);
-      await replyEmbed(message, errorEmbed("Failed to clear magic rules."));
+      await replyLoggedError(
+        message,
+        "Failed to clear magic rules:",
+        error,
+        "Failed to clear magic rules",
+      );
     }
   },
 };

@@ -17,6 +17,7 @@ import {
 } from "../layout/types.js";
 import { resolveFingermapPalette } from "../config/user.js";
 import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
 export const swapCommand: Command = {
@@ -98,8 +99,12 @@ export const swapCommand: Command = {
         return;
       }
 
-      console.error("Failed to swap layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to update layout."));
+      await replyLoggedError(
+        message,
+        "Failed to swap layout:",
+        error,
+        "Failed to update layout",
+      );
     }
   },
 };

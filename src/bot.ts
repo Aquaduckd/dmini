@@ -12,6 +12,7 @@ import {
   userCanRunCommand,
 } from "./command/index.js";
 import { errorEmbed, replyEmbed } from "./discord/embeds.js";
+import { replyLoggedError } from "./discord/errors.js";
 
 const globalState = globalThis as typeof globalThis & {
   __dminiClient?: Client;
@@ -68,10 +69,11 @@ export async function startBot(): Promise<void> {
     try {
       await command.execute({ message, args: parsed.args });
     } catch (error) {
-      console.error(`Error running command ${command.name}:`, error);
-      await replyEmbed(
+      await replyLoggedError(
         message,
-        errorEmbed("Something went wrong running that command."),
+        `Error running command ${command.name}:`,
+        error,
+        "Something went wrong running that command",
       );
     }
   });

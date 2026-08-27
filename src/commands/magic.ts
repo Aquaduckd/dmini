@@ -14,6 +14,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const DEFAULT_MAGIC_LIST_LIMIT = 25;
 export const MAX_MAGIC_LIST_LIMIT = 50;
@@ -143,15 +144,21 @@ export const magicCommand: Command = {
       }
 
       if (error instanceof LayoutApiError) {
-        await replyEmbed(
+        await replyLoggedError(
           message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
+          "Failed to fetch magic rules:",
+          error,
+          "Failed to fetch magic rules",
         );
         return;
       }
 
-      console.error("Failed to fetch magic rules:", error);
-      await replyEmbed(message, errorEmbed("Failed to fetch magic rules."));
+      await replyLoggedError(
+        message,
+        "Failed to fetch magic rules:",
+        error,
+        "Failed to fetch magic rules",
+      );
     }
   },
 };

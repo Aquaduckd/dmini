@@ -24,6 +24,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 
 export const addmagicCommand: Command = {
   name: "addmagic",
@@ -144,8 +145,12 @@ export const addmagicCommand: Command = {
         return;
       }
 
-      console.error("Failed to update magic rules:", error);
-      await replyEmbed(message, errorEmbed("Failed to update magic rules."));
+      await replyLoggedError(
+        message,
+        "Failed to update magic rules:",
+        error,
+        "Failed to update magic rules",
+      );
     }
   },
 };

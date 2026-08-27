@@ -7,6 +7,7 @@ import type { Command } from "../command/types.js";
 import { replyUsage } from "../command/format.js";
 import { resolveCorpus, resolveFingermapPalette, resolveRenderMode } from "../config/user.js";
 import { errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import {
   isStaggeredBoard,
   layoutLikeCount,
@@ -128,26 +129,22 @@ export const percentilesCommand: Command = {
         return;
       }
 
-      if (error instanceof LayoutApiError) {
-        await replyEmbed(
+      if (error instanceof LayoutApiError || error instanceof Mana2Error) {
+        await replyLoggedError(
           message,
-          errorEmbed(`API error (${error.status}): ${error.message}`),
+          "Failed to show layout percentiles:",
+          error,
+          "Failed to show layout percentiles",
         );
         return;
       }
 
-      if (error instanceof Mana2Error) {
-        await replyEmbed(message, errorEmbed(error.message));
-        return;
-      }
-
-      if (error instanceof Error) {
-        await replyEmbed(message, errorEmbed(error.message));
-        return;
-      }
-
-      console.error("Failed to show layout percentiles:", error);
-      await replyEmbed(message, errorEmbed("Failed to show layout percentiles."));
+      await replyLoggedError(
+        message,
+        "Failed to show layout percentiles:",
+        error,
+        "Failed to show layout percentiles",
+      );
     }
   },
 };

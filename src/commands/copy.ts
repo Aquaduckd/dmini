@@ -23,6 +23,7 @@ import {
 } from "../layout/types.js";
 import { resolveFingermapPalette } from "../config/user.js";
 import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
 export const copyCommand: Command = {
@@ -98,8 +99,12 @@ export const copyCommand: Command = {
         return;
       }
 
-      console.error("Failed to copy layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to copy layout."));
+      await replyLoggedError(
+        message,
+        "Failed to copy layout:",
+        error,
+        "Failed to copy layout",
+      );
       return;
     }
 

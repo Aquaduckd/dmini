@@ -22,6 +22,7 @@ import {
 } from "../layout/types.js";
 import { resolveFingermapPalette } from "../config/user.js";
 import { Colors, errorEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
 function parseAddInput(
@@ -180,8 +181,12 @@ export const addCommand: Command = {
         return;
       }
 
-      console.error("Failed to create layout:", error);
-      await replyEmbed(message, errorEmbed("Failed to create layout."));
+      await replyLoggedError(
+        message,
+        "Failed to create layout:",
+        error,
+        "Failed to create layout",
+      );
       return;
     }
 

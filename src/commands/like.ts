@@ -9,6 +9,7 @@ import { PREFIX } from "../command/constants.js";
 import { replyUsage } from "../command/format.js";
 import type { Command, CommandContext } from "../command/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import {
   addLayoutLike,
   isQwertyLayout,
@@ -88,8 +89,12 @@ async function executeLikeMutation(
       return;
     }
 
-    console.error(`Failed to ${action} layout:`, error);
-    await replyEmbed(message, errorEmbed(`Failed to ${action} layout.`));
+    await replyLoggedError(
+      message,
+      `Failed to ${action} layout:`,
+      error,
+      `Failed to ${action} layout`,
+    );
   }
 }
 

@@ -112,9 +112,11 @@ export async function downloadCorpus(name: string): Promise<string> {
   const { stdout, stderr, exitCode } = await runMana2Cli(mana2Root, `get ${known}`);
 
   if (exitCode !== 0) {
-    throw new CorpusError(
-      stripAnsi(stderr.trim() || stdout.trim() || `Failed to download \`${known}\`.`),
+    const detail = stripAnsi(
+      stderr.trim() || stdout.trim() || `Failed to download \`${known}\`.`,
     );
+    console.error(`Failed to download corpus ${known}:`, detail);
+    throw new CorpusError(`Failed to download \`${known}\`.`);
   }
 
   return known;
@@ -139,15 +141,14 @@ export async function downloadAllCorpora(
     try {
       downloaded.push(await downloadCorpus(name));
     } catch (error) {
-      failed.push({
-        name,
-        message:
-          error instanceof CorpusError
+      const message =
+        error instanceof CorpusError
+          ? error.message
+          : error instanceof Error
             ? error.message
-            : error instanceof Error
-              ? error.message
-              : "Download failed",
-      });
+            : "Download failed";
+      console.error(`Failed to download corpus ${name}:`, error);
+      failed.push({ name, message: "Download failed" });
     }
   }
 

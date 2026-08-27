@@ -10,6 +10,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { replyLoggedError } from "../discord/errors.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { CorpusError } from "../mana2/corpus.js";
 import {
@@ -103,8 +104,18 @@ export const findCommand: Command = {
         }),
       );
     } catch (error) {
-      if (error instanceof CorpusError || error instanceof Mana2Error) {
+      if (error instanceof CorpusError) {
         await replyEmbed(message, errorEmbed(error.message));
+        return;
+      }
+
+      if (error instanceof Mana2Error) {
+        await replyLoggedError(
+          message,
+          "Failed to search corpus:",
+          error,
+          "Failed to search corpus",
+        );
         return;
       }
 
@@ -113,8 +124,12 @@ export const findCommand: Command = {
         return;
       }
 
-      console.error("Failed to search corpus:", error);
-      await replyEmbed(message, errorEmbed("Failed to search corpus."));
+      await replyLoggedError(
+        message,
+        "Failed to search corpus:",
+        error,
+        "Failed to search corpus",
+      );
     }
   },
 };
