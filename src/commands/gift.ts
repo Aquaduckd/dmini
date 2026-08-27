@@ -28,8 +28,10 @@ export const giftCommand: Command = {
   name: "gift",
   description: "Offer one of your layouts to another author",
   usage: `${PREFIX}gift <username> <layout> | ${PREFIX}gift accept <username> [layout]`,
+  notes:
+    "Offer names the recipient; accept names the sender who gifted you. Author names must match the catalog exactly.",
   examples: [
-    `${PREFIX}gift galileotime opal`,
+    `${PREFIX}gift clemenpine opal`,
     `${PREFIX}gift accept galileotime`,
   ],
   async execute({ message, args }) {
