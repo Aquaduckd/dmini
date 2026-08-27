@@ -69,11 +69,11 @@ export const configCommand: Command = {
           [
             `**Corpus:** \`${effectiveCorpus}\``,
             `**Render:** \`${renderMode}\``,
-            `**Fingermap palette:** \`${fingermapPalette}\` (${FINGER_PALETTES[fingermapPalette].label})`,
+            `**Palette:** \`${fingermapPalette}\` (${FINGER_PALETTES[fingermapPalette].label})`,
             "",
             `Override corpus per command with \`--corpus <name>\` on \`${PREFIX}analyze\` and \`${PREFIX}examples\`.`,
             `Change render mode with \`${PREFIX}config render fingermap|heatmap\`.`,
-            `Change fingermap colors with \`${PREFIX}config palette cminibrowser|neon\`.`,
+            `Change palette with \`${PREFIX}config palette cminibrowser|neon\`.`,
           ].join("\n"),
         ),
       );
@@ -86,7 +86,7 @@ export const configCommand: Command = {
         message,
         infoEmbed(
           "Settings reset",
-          `Your settings were cleared. Commands will use the bot default corpus (\`${BOT_DEFAULT_CORPUS}\`), render mode (\`${DEFAULT_RENDER_MODE}\`), and fingermap palette (\`${DEFAULT_FINGER_PALETTE}\`).`,
+          `Your settings were cleared. Commands will use the bot default corpus (\`${BOT_DEFAULT_CORPUS}\`), render mode (\`${DEFAULT_RENDER_MODE}\`), and palette (\`${DEFAULT_FINGER_PALETTE}\`).`,
         ),
       );
       return;
@@ -169,7 +169,7 @@ export const configCommand: Command = {
         await replyEmbed(
           message,
           infoEmbed(
-            "Fingermap palette",
+            "Palette",
             [
               `**Current palette:** \`${fingermapPalette}\` (${FINGER_PALETTES[fingermapPalette].label})`,
               "",
@@ -202,7 +202,7 @@ export const configCommand: Command = {
       await replyEmbed(
         message,
         infoEmbed(
-          "Fingermap palette updated",
+          "Palette updated",
           `Layout images will now use the **${FINGER_PALETTES[fingermapPalette].label}** finger colors.`,
         ),
       );
