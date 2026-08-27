@@ -141,9 +141,17 @@ export function paginateExamples(
   };
 }
 
-export function formatExamplesText(result: PaginatedExamples): string {
-  const header = `${result.stat} · ${result.layoutName} · page ${result.page}/${result.pageCount}`;
-  const body = result.lines.length > 0 ? result.lines.join("\n") : `${ROW_INDENT}(no examples)`;
+export function formatExamplesText(
+  result: PaginatedExamples,
+  corpus?: string,
+): string {
+  const headerParts = [result.stat, result.layoutName];
+  if (corpus) headerParts.push(corpus);
+  const header = headerParts.join(" · ");
+  const body =
+    result.lines.length > 0
+      ? result.lines.join("\n")
+      : `${ROW_INDENT}(no examples)`;
   const longestLine = Math.max(header.length, ...result.lines.map((line) => line.length));
 
   if (longestLine > MAX_LINE_LENGTH) {

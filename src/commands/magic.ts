@@ -2,7 +2,7 @@ import { AttachmentBuilder } from "discord.js";
 import { resolveLayoutAuthor } from "../api/authors.js";
 import { fetchLayoutDoc, LayoutApiError, LayoutNotFoundError } from "../api/layouts.js";
 import { PREFIX } from "../command/constants.js";
-import { FlagParseError, parseCommandArgs } from "../command/flags.js";
+import { parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import { formatMagicRulesText } from "../layout/magic.js";
@@ -16,70 +16,20 @@ import {
 } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 
-export const DEFAULT_MAGIC_LIST_LIMIT = 25;
-export const MAX_MAGIC_LIST_LIMIT = 50;
-
-function clampLimit(limit: number): number {
-  if (!Number.isFinite(limit)) return DEFAULT_MAGIC_LIST_LIMIT;
-  return Math.min(Math.max(Math.trunc(limit), 1), MAX_MAGIC_LIST_LIMIT);
-}
-
-function clampPage(page: number): number {
-  if (!Number.isFinite(page)) return 1;
-  return Math.max(Math.trunc(page), 1);
-}
-
-function paginateRules<T>(items: T[], limit: number, page: number) {
-  const total = items.length;
-  const pageCount = Math.max(1, Math.ceil(total / limit));
-  const safePage = Math.min(Math.max(page, 1), pageCount);
-  const start = (safePage - 1) * limit;
-
-  return {
-    items: items.slice(start, start + limit),
-    total,
-    pageCount,
-    safePage,
-  };
-}
-
 export const magicCommand: Command = {
   name: "magic",
   description: "Show magic rules for a layout",
-  usage: `${PREFIX}magic <name> [--limit N] [--page N]`,
+  usage: `${PREFIX}magic <name>`,
   aliases: ["magicrules"],
-  examples: [
-    `${PREFIX}magic opal`,
-    `${PREFIX}magic gallium --page 2`,
-  ],
+  examples: [`${PREFIX}magic opal`, `${PREFIX}magic gallium`],
   async execute({ message, args }) {
-    let name = "";
-    let limitFlag: number | undefined;
-    let page = 1;
+    const { positional } = parseCommandArgs(args);
+    const name = positional[0]?.trim() ?? "";
 
-    try {
-      const { positional, flags } = parseCommandArgs(args, {
-        limit: true,
-        page: true,
-      });
-
-      name = positional[0]?.trim() ?? "";
-      if (!name || positional.length > 1) {
-        await replyUsage({ message, args }, magicCommand);
-        return;
-      }
-
-      limitFlag = flags.limit;
-      if (flags.page !== undefined) page = flags.page;
-    } catch (error) {
-      if (error instanceof FlagParseError) {
-        await replyEmbed(message, errorEmbed(error.message));
-        return;
-      }
-      throw error;
+    if (!name || positional.length > 1) {
+      await replyUsage({ message, args }, magicCommand);
+      return;
     }
-
-    page = clampPage(page);
 
     try {
       const layout = await fetchLayoutDoc(name);
@@ -97,45 +47,27 @@ export const magicCommand: Command = {
         return;
       }
 
-      const limit = clampLimit(limitFlag ?? rules.length);
-      const { items, total, pageCount, safePage } = paginateRules(
-        rules,
-        limit,
-        page,
-      );
-      let body = formatMagicRulesText(items);
-      let footer = `${total} rule${total === 1 ? "" : "s"}`;
-
-      if (pageCount > 1) {
-        footer = `Page ${safePage}/${pageCount} · ${limit} per page · ${footer}`;
-      }
-
-      if (!fitsInCodeBlock(body) && pageCount === 1) {
-        const reduced = paginateRules(rules, 15, 1);
-        body = formatMagicRulesText(reduced.items);
-        footer = `Page 1/${Math.max(1, Math.ceil(total / 15))} · 15 per page · ${total} rules`;
-      }
+      const body = formatMagicRulesText(rules);
+      const footer = formatLikeCount(layoutLikeCount(layout));
 
       if (!fitsInCodeBlock(body)) {
         const attachment = new AttachmentBuilder(
-          Buffer.from(formatMagicRulesText(rules), "utf8"),
+          Buffer.from(body, "utf8"),
           { name: `${name.toLowerCase()}-magic.txt` },
         );
         const embed = infoEmbed(
           `${layout.name} · Magic rules`,
-          `${total} rules attached.`,
+          `${rules.length} rules attached.`,
         );
         if (author) embed.setAuthor({ name: author });
-        embed.setFooter({ text: formatLikeCount(layoutLikeCount(layout)) });
+        embed.setFooter({ text: footer });
         await replyEmbed(message, embed, { files: [attachment] });
         return;
       }
 
       const embed = infoEmbed(`${layout.name} · Magic rules`, textCodeBlock(body));
       if (author) embed.setAuthor({ name: author });
-      embed.setFooter({
-        text: [footer, formatLikeCount(layoutLikeCount(layout))].join(" · "),
-      });
+      embed.setFooter({ text: footer });
       await replyEmbed(message, embed);
     } catch (error) {
       if (error instanceof LayoutNotFoundError) {

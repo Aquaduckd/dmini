@@ -17,6 +17,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
 
 export const DEFAULT_LAYOUT_LIST_LIMIT = 20;
@@ -170,8 +171,6 @@ export function paginateLayouts(
 function formatLayoutListText(
   scopeLabel: string,
   layouts: LayoutSummary[],
-  page: number,
-  pageCount: number,
   sort: LayoutSort,
   direction: LayoutSortDirection,
 ): string {
@@ -181,7 +180,6 @@ function formatLayoutListText(
   const headerParts = [scopeLabel];
   if (sortLabel) headerParts.push(sortLabel);
   if (directionLabel) headerParts.push(directionLabel);
-  headerParts.push(`page ${page}/${pageCount}`);
   const header = headerParts.join(" · ");
 
   if (layouts.length === 0) {
@@ -242,7 +240,6 @@ export const layoutsCommand: Command = {
     let page = 1;
     let sort: LayoutSort = "name";
     let sortDirection: LayoutSortDirection = "asc";
-    let directionExplicit = false;
 
     try {
       const { positional, flags } = parseCommandArgs(args, {
@@ -265,7 +262,6 @@ export const layoutsCommand: Command = {
       if (flags.limit !== undefined) limit = flags.limit;
       if (flags.page !== undefined) page = flags.page;
       sort = parseLayoutSort(flags.sort);
-      directionExplicit = Boolean(flags.asc || flags.desc);
       sortDirection = parseSortDirection(flags.asc, flags.desc, sort);
     } catch (error) {
       if (error instanceof FlagParseError) {
@@ -371,11 +367,11 @@ export const layoutsCommand: Command = {
       let text = formatLayoutListText(
         scope.label,
         pageLayouts,
-        safePage,
-        pageCount,
         sort,
         sortDirection,
       );
+      let footerLimit = limit;
+      let footerPageCount = pageCount;
 
       if (!fitsInCodeBlock(text)) {
         const reducedLimit = Math.min(limit, 15);
@@ -391,11 +387,11 @@ export const layoutsCommand: Command = {
         text = formatLayoutListText(
           scope.label,
           reduced.items,
-          safePage,
-          reduced.pageCount,
           sort,
           sortDirection,
         );
+        footerLimit = reducedLimit;
+        footerPageCount = reduced.pageCount;
 
         if (!fitsInCodeBlock(text)) {
           await replyEmbed(
@@ -408,16 +404,15 @@ export const layoutsCommand: Command = {
         }
       }
 
-      const footerSort = sort === "name" ? "" : ` · ${SORT_LABELS[sort]}`;
-      const footerDirection =
-        directionExplicit || sortDirection !== defaultSortDirection(sort)
-          ? ` · ${sortDirection}`
-          : "";
-
       await replyEmbed(
         message,
         infoEmbed(`Layouts · ${scope.title}`, textCodeBlock(text)).setFooter({
-          text: `Page ${safePage}/${pageCount} · ${limit} per page · ${total} total${footerSort}${footerDirection}`,
+          text: formatPaginationFooter({
+            page: safePage,
+            pageCount: footerPageCount,
+            limit: footerLimit,
+            total,
+          }),
         }),
       );
     } catch (error) {

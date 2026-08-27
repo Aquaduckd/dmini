@@ -11,6 +11,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
   clampLimit,
@@ -24,20 +25,16 @@ import {
 function formatLikesListText(
   scopeLabel: string,
   layouts: LayoutSummary[],
-  page: number,
-  pageCount: number,
 ): string {
-  const header = `${scopeLabel} · page ${page}/${pageCount}`;
-
   if (layouts.length === 0) {
-    return [header, `${ROW_INDENT}(no layouts)`].join("\n");
+    return [scopeLabel, `${ROW_INDENT}(no layouts)`].join("\n");
   }
 
   const body = layouts
     .map((layout) => `${ROW_INDENT}${displayLayoutName(layout.name)}`)
     .join("\n");
 
-  return [header, body].join("\n");
+  return [scopeLabel, body].join("\n");
 }
 
 export const likesCommand: Command = {
@@ -119,7 +116,8 @@ export const likesCommand: Command = {
         offset: (safePage - 1) * limit,
       });
 
-      let text = formatLikesListText(scopeLabel, pageLayouts, safePage, pageCount);
+      let text = formatLikesListText(scopeLabel, pageLayouts);
+      let footerLimit = limit;
       let footerPageCount = pageCount;
 
       if (!fitsInCodeBlock(text)) {
@@ -132,12 +130,8 @@ export const likesCommand: Command = {
         ).layouts;
         const reduced = paginateLayouts(allLayouts, reducedLimit, safePage);
 
-        text = formatLikesListText(
-          scopeLabel,
-          reduced.items,
-          safePage,
-          reduced.pageCount,
-        );
+        text = formatLikesListText(scopeLabel, reduced.items);
+        footerLimit = reducedLimit;
         footerPageCount = reduced.pageCount;
 
         if (!fitsInCodeBlock(text)) {
@@ -154,7 +148,12 @@ export const likesCommand: Command = {
       await replyEmbed(
         message,
         infoEmbed(title, textCodeBlock(text)).setFooter({
-          text: `Page ${safePage}/${footerPageCount} · ${limit} per page · ${total} total`,
+          text: formatPaginationFooter({
+            page: safePage,
+            pageCount: footerPageCount,
+            limit: footerLimit,
+            total,
+          }),
         }),
       );
     } catch (error) {

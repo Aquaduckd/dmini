@@ -15,6 +15,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { CorpusError } from "../mana2/corpus.js";
@@ -151,18 +152,18 @@ export const examplesCommand: Command = {
         return;
       }
 
-      const result = paginateExamples(layout.name, stat, examples, limit, page);
-      let text = formatExamplesText(result);
+      let pagination = paginateExamples(layout.name, stat, examples, limit, page);
+      let text = formatExamplesText(pagination, corpus);
 
       if (!fitsInCodeBlock(text)) {
-        const reduced = paginateExamples(
+        pagination = paginateExamples(
           layout.name,
           stat,
           examples,
           Math.min(limit, 20),
           page,
         );
-        text = formatExamplesText(reduced);
+        text = formatExamplesText(pagination, corpus);
 
         if (!fitsInCodeBlock(text)) {
           await replyEmbed(
@@ -178,7 +179,7 @@ export const examplesCommand: Command = {
       await replyEmbed(
         message,
         infoEmbed(`${stat} · ${layout.name}`, textCodeBlock(text)).setFooter({
-          text: `Page ${result.page}/${result.pageCount} · ${result.limit} per page · ${result.total} total · ${corpus}`,
+          text: formatPaginationFooter(pagination),
         }),
       );
     } catch (error) {

@@ -11,6 +11,7 @@ import {
   replyEmbed,
   textCodeBlock,
 } from "../discord/embeds.js";
+import { formatPaginationFooter } from "../discord/pagination.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import {
@@ -34,7 +35,6 @@ const VALUE_GAP = "  ";
 function formatLeaderboardText(
   result: LeaderboardResult,
   page: number,
-  pageCount: number,
   limit: number,
 ): string {
   const filterLabel = leaderboardFilterLabel(result.filter);
@@ -47,8 +47,8 @@ function formatLeaderboardText(
 
   const meta =
     result.mode === "overall"
-      ? `Avg percentile across ${result.overallStatCount} stats · ${result.layoutCount} layouts · page ${page}/${pageCount}`
-      : `${result.layoutCount} layouts · page ${page}/${pageCount}`;
+      ? `Avg percentile across ${result.overallStatCount} stats · ${result.layoutCount} layouts`
+      : `${result.layoutCount} layouts`;
 
   if (result.entries.length === 0) {
     return [header, meta, `${ROW_INDENT}(no layouts)`].join("\n");
@@ -181,17 +181,19 @@ export const leaderboardCommand: Command = {
         return;
       }
 
-      const text = formatLeaderboardText(result, page, pageCount, limit);
+      const text = formatLeaderboardText(result, page, limit);
 
-      if (fitsInCodeBlock(text)) {
-        await replyEmbed(
-          message,
-          infoEmbed("Leaderboard", textCodeBlock(text)),
-        );
-        return;
-      }
+      const embed = infoEmbed("Leaderboard", fitsInCodeBlock(text) ? textCodeBlock(text) : text);
+      embed.setFooter({
+        text: formatPaginationFooter({
+          page,
+          pageCount,
+          limit,
+          total: result.totalEntries,
+        }),
+      });
 
-      await replyEmbed(message, infoEmbed("Leaderboard", text));
+      await replyEmbed(message, embed);
     } catch (error) {
       if (error instanceof PercentileCutoffsMissingError) {
         const userIsAdmin = await isAdmin(message.author.id);
