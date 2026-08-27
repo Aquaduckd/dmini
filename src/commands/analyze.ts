@@ -24,6 +24,7 @@ import { renderKeyboardPng } from "../render/keyboard.js";
 
 export const analyzeCommand: Command = {
   name: "analyze",
+  aliases: ["analyse"],
   description: "Analyze a keyboard layout",
   usage: `${PREFIX}analyze <name> [--corpus <name>] [--heatmap|--fingermap]`,
   examples: [

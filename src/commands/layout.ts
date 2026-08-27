@@ -16,6 +16,7 @@ import { renderKeyboardPng } from "../render/keyboard.js";
 
 export const layoutCommand: Command = {
   name: "layout",
+  aliases: ["view"],
   description: "Show a keyboard layout",
   usage: `${PREFIX}layout <name> [--heatmap|--fingermap]`,
   examples: [
