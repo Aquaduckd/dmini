@@ -16,10 +16,12 @@ import {
   ANALYZER_VERSION,
   clearAnalysisCache,
   getCacheStatus,
+  getLayoutCacheVersionCounts,
   warmAnalysisCache,
 } from "../mana2/cache.js";
 import {
   buildAndSaveCorpusPercentileCutoffs,
+  listPercentileCacheSummaries,
   PERCENTILE_BUCKET_COUNT,
 } from "../mana2/percentiles.js";
 import {
@@ -362,6 +364,52 @@ async function handleCache(message: Message, args: string): Promise<void> {
   );
 }
 
+async function handleVersions(message: Message): Promise<void> {
+  const [layoutCounts, percentileSummaries] = await Promise.all([
+    getLayoutCacheVersionCounts(),
+    listPercentileCacheSummaries(),
+  ]);
+
+  const versionLines = Object.entries(layoutCounts.byVersion)
+    .map(([version, count]) => [Number(version), count] as const)
+    .sort(([a], [b]) => b - a)
+    .map(([version, count]) => {
+      const label =
+        version === layoutCounts.currentVersion
+          ? `v${version} (current)`
+          : version === 0
+            ? "unknown"
+            : `v${version}`;
+      return `- ${label}: **${count}**`;
+    });
+
+  const lines = [
+    `Current analyzer: **${layoutCounts.currentVersion}**`,
+    "",
+    "**Layout cache**",
+    ...(versionLines.length > 0 ? versionLines : ["- (none)"]),
+    `- Total files: **${layoutCounts.totalFiles}**`,
+    "",
+    "**Percentiles**",
+  ];
+
+  if (percentileSummaries.length === 0) {
+    lines.push("- (none)");
+  } else {
+    for (const summary of percentileSummaries) {
+      const builtAt = new Date(summary.built_at);
+      const builtLabel = Number.isNaN(builtAt.getTime())
+        ? summary.built_at
+        : builtAt.toISOString().slice(0, 10);
+      lines.push(
+        `- \`${summary.corpus}\`: v**${summary.analyzer_version}** · **${summary.layout_count}** layouts · built ${builtLabel}`,
+      );
+    }
+  }
+
+  await replyEmbed(message, infoEmbed("Cache versions", lines.join("\n")));
+}
+
 async function handlePercentiles(message: Message, args: string): Promise<void> {
   const corpus = args.trim() || BOT_DEFAULT_CORPUS;
 
@@ -439,6 +487,12 @@ const subcommands: Record<string, DebugSubcommand> = {
     ],
     execute: handlePercentiles,
   },
+  versions: {
+    description: "Show layout cache counts by analyzer version and percentile metadata",
+    usage: `${PREFIX}debug versions`,
+    examples: [`${PREFIX}debug versions`],
+    execute: (message) => handleVersions(message),
+  },
 };
 
 function debugListEmbed() {
@@ -470,6 +524,7 @@ export const debugCommand: Command = {
     `${PREFIX}debug corpus get all`,
     `${PREFIX}debug cache warm`,
     `${PREFIX}debug percentiles`,
+    `${PREFIX}debug versions`,
   ],
   async execute({ message, args }) {
     const trimmed = args.trim();

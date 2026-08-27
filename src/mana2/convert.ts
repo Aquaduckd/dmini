@@ -66,6 +66,15 @@ export function layoutHasMagicRules(layout: LayoutDoc): boolean {
   return (layout.magic?.length ?? 0) > 0;
 }
 
+export function layoutHasThumbKeys(layout: Pick<LayoutDoc, "keys">): boolean {
+  return Object.values(layout.keys).some(
+    (position) =>
+      position.finger === "LT" ||
+      position.finger === "RT" ||
+      position.finger === "TB",
+  );
+}
+
 export function convertToMana2LayoutFile(layout: LayoutDoc): Mana2LayoutFile {
   interface PlacedKey {
     character: string;

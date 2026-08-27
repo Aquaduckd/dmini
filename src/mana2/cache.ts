@@ -4,6 +4,7 @@ import { fetchLayoutDoc, listAllLayouts, type LayoutSummary } from "../api/layou
 import { BOT_DEFAULT_CORPUS } from "../config/user.js";
 import { isAnalyzableLayout, type LayoutDoc } from "../layout/types.js";
 import { runMana2ForLayout, sanitizeTempName } from "./cli.js";
+import { layoutHasMagicRules, layoutHasThumbKeys } from "./convert.js";
 import { resolveDownloadedCorpus } from "./corpus.js";
 import {
   analysisFromRecord,
@@ -12,7 +13,7 @@ import {
   type Mana2Analysis,
 } from "./parse.js";
 
-export const ANALYZER_VERSION = 2;
+export const ANALYZER_VERSION = 3;
 
 const CACHE_DIR = path.resolve(process.cwd(), ".dmini", "cache");
 const LAYOUT_CACHE_DIR = path.join(CACHE_DIR, "layouts");
@@ -21,6 +22,8 @@ export interface LayoutCacheEntry {
   layout: string;
   modified_at?: string;
   analyzer_version: number;
+  has_magic?: boolean;
+  has_thumbs?: boolean;
   corpora: Record<string, Record<string, number>>;
 }
 
@@ -48,6 +51,12 @@ export interface WarmCacheResult {
 export interface CacheStatus {
   layoutFiles: number;
   corpora: string[];
+}
+
+export interface LayoutCacheVersionCounts {
+  currentVersion: number;
+  totalFiles: number;
+  byVersion: Record<number, number>;
 }
 
 const inflight = new Map<string, Promise<Mana2Analysis>>();
@@ -180,6 +189,8 @@ export async function computeAndCacheLayoutStats(
   entry.layout = layout.name;
   entry.modified_at = layout.modified_at;
   entry.analyzer_version = ANALYZER_VERSION;
+  entry.has_magic = layoutHasMagicRules(layout);
+  entry.has_thumbs = layoutHasThumbKeys(layout);
   entry.corpora[corpus] = stats;
 
   await writeLayoutCache(entry);
@@ -322,6 +333,22 @@ export async function getCacheStatus(): Promise<CacheStatus> {
   };
 }
 
+export async function getLayoutCacheVersionCounts(): Promise<LayoutCacheVersionCounts> {
+  const entries = await readAllLayoutCacheEntries();
+  const byVersion: Record<number, number> = {};
+
+  for (const entry of entries) {
+    const version = entry.analyzer_version ?? 0;
+    byVersion[version] = (byVersion[version] ?? 0) + 1;
+  }
+
+  return {
+    currentVersion: ANALYZER_VERSION,
+    totalFiles: entries.length,
+    byVersion,
+  };
+}
+
 export async function clearAnalysisCache(
   layoutName?: string,
 ): Promise<{ layoutFiles: number }> {
@@ -333,7 +360,6 @@ export async function clearAnalysisCache(
 
   await rm(LAYOUT_CACHE_DIR, { force: true, recursive: true });
   await rm(path.join(CACHE_DIR, "index"), { force: true, recursive: true });
-  await rm(path.join(CACHE_DIR, "percentiles"), { force: true, recursive: true });
   return { layoutFiles: 0 };
 }
 
@@ -428,4 +454,9 @@ export async function warmAnalysisCache(
   }
 
   return results;
+}
+
+export async function listCurrentVersionCacheEntries(): Promise<LayoutCacheEntry[]> {
+  const entries = await readAllLayoutCacheEntries();
+  return entries.filter((entry) => entry.analyzer_version === ANALYZER_VERSION);
 }

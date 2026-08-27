@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { PREFIX } from "../command/constants.js";
 import { BOT_DEFAULT_CORPUS } from "../config/user.js";
@@ -25,6 +25,13 @@ export interface CorpusPercentileCutoffs {
   built_at: string;
   layout_count: number;
   stats: Record<string, number[]>;
+}
+
+export interface PercentileCacheSummary {
+  corpus: string;
+  analyzer_version: number;
+  layout_count: number;
+  built_at: string;
 }
 
 function percentileCachePath(corpus: string): string {
@@ -77,6 +84,18 @@ export function percentileFromCutoffs(
   return bucket;
 }
 
+export function percentileScoreFromCutoffs(
+  cutoffs: number[],
+  value: number,
+  options: { lowerIsBetter?: boolean } = {},
+): number | null {
+  const bucket = percentileFromCutoffs(cutoffs, value);
+  if (bucket === null) return null;
+
+  const lowerIsBetter = options.lowerIsBetter ?? false;
+  return lowerIsBetter ? PERCENTILE_BUCKET_COUNT - 1 - bucket : bucket;
+}
+
 export function buildCorpusPercentileCutoffs(
   index: CorpusIndex,
 ): Record<string, number[]> {
@@ -107,14 +126,39 @@ export async function loadCorpusPercentileCutoffs(
 ): Promise<CorpusPercentileCutoffs | null> {
   try {
     const raw = await readFile(percentileCachePath(corpus), "utf8");
-    const parsed = JSON.parse(raw) as CorpusPercentileCutoffs;
-    if (parsed.analyzer_version !== ANALYZER_VERSION) {
-      return null;
-    }
-    return parsed;
+    return JSON.parse(raw) as CorpusPercentileCutoffs;
   } catch {
     return null;
   }
+}
+
+export async function listPercentileCacheSummaries(): Promise<PercentileCacheSummary[]> {
+  let files: string[];
+
+  try {
+    files = (await readdir(PERCENTILE_CACHE_DIR)).filter((file) => file.endsWith(".json"));
+  } catch {
+    return [];
+  }
+
+  const summaries: PercentileCacheSummary[] = [];
+
+  for (const file of files) {
+    try {
+      const raw = await readFile(path.join(PERCENTILE_CACHE_DIR, file), "utf8");
+      const parsed = JSON.parse(raw) as CorpusPercentileCutoffs;
+      summaries.push({
+        corpus: parsed.corpus,
+        analyzer_version: parsed.analyzer_version,
+        layout_count: parsed.layout_count,
+        built_at: parsed.built_at,
+      });
+    } catch {
+      // ignore broken cache files
+    }
+  }
+
+  return summaries.sort((a, b) => a.corpus.localeCompare(b.corpus));
 }
 
 export async function saveCorpusPercentileCutoffs(
@@ -170,14 +214,29 @@ export async function clearPercentileCutoffs(corpus?: string): Promise<void> {
   await rm(PERCENTILE_CACHE_DIR, { force: true, recursive: true });
 }
 
-export async function ensureCorpusPercentileCutoffs(
+export async function loadResolvedCorpusPercentileCutoffs(
+  corpus = BOT_DEFAULT_CORPUS,
+): Promise<CorpusPercentileCutoffs | null> {
+  const resolvedCorpus = await resolveDownloadedCorpus(corpus);
+  return loadCorpusPercentileCutoffs(resolvedCorpus);
+}
+
+export class PercentileCutoffsMissingError extends Error {
+  constructor(corpus: string) {
+    super(
+      `No percentile cutoffs found for corpus \`${corpus}\`. Run \`${PREFIX}debug cache warm ${corpus}\`, then \`${PREFIX}debug percentiles ${corpus}\`.`,
+    );
+    this.name = "PercentileCutoffsMissingError";
+  }
+}
+
+export async function requireResolvedCorpusPercentileCutoffs(
   corpus = BOT_DEFAULT_CORPUS,
 ): Promise<CorpusPercentileCutoffs> {
-  const resolvedCorpus = await resolveDownloadedCorpus(corpus);
-  const existing = await loadCorpusPercentileCutoffs(resolvedCorpus);
-  if (existing) return existing;
-
-  const { table } = await buildAndSaveCorpusPercentileCutoffs(resolvedCorpus);
+  const table = await loadResolvedCorpusPercentileCutoffs(corpus);
+  if (!table) {
+    throw new PercentileCutoffsMissingError(corpus);
+  }
   return table;
 }
 

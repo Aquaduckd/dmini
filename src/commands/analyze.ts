@@ -19,7 +19,7 @@ import { analyzeLayout, Mana2Error } from "../mana2/analyze.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { buildAnalysisEmbed } from "../mana2/format.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
-import { ensureCorpusPercentileCutoffs } from "../mana2/percentiles.js";
+import { loadResolvedCorpusPercentileCutoffs } from "../mana2/percentiles.js";
 import { buildHeatContext } from "../render/heatmap.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
@@ -97,7 +97,7 @@ export const analyzeCommand: Command = {
 
       const [analysis, percentileTable, monograms, author] = await Promise.all([
         analyzeLayout(layout, { corpus }),
-        ensureCorpusPercentileCutoffs(corpus),
+        loadResolvedCorpusPercentileCutoffs(corpus),
         renderMode === "heatmap"
           ? loadCorpusMonograms(corpus)
           : Promise.resolve(undefined),
@@ -124,7 +124,7 @@ export const analyzeCommand: Command = {
         corpus,
         author,
         layoutLikeCount(layout),
-        percentileTable.stats,
+        percentileTable?.stats,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });

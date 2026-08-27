@@ -20,7 +20,7 @@ import { Mana2Error } from "../mana2/analyze.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { buildPercentilesEmbed } from "../mana2/format.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
-import { ensureCorpusPercentileCutoffs } from "../mana2/percentiles.js";
+import { loadResolvedCorpusPercentileCutoffs } from "../mana2/percentiles.js";
 import { buildHeatContext } from "../render/heatmap.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
 
@@ -91,12 +91,22 @@ export const percentilesCommand: Command = {
 
       const [analysis, percentileTable, monograms, author] = await Promise.all([
         getLayoutStats(layout, corpus),
-        ensureCorpusPercentileCutoffs(corpus),
+        loadResolvedCorpusPercentileCutoffs(corpus),
         renderMode === "heatmap"
           ? loadCorpusMonograms(corpus)
           : Promise.resolve(undefined),
         resolveLayoutAuthor(layout.user),
       ]);
+
+      if (!percentileTable) {
+        await replyEmbed(
+          message,
+          errorEmbed(
+            `No percentile cutoffs found for corpus \`${corpus}\`. Run \`${PREFIX}debug cache warm ${corpus}\`, then \`${PREFIX}debug percentiles ${corpus}\`.`,
+          ),
+        );
+        return;
+      }
 
       const heat =
         monograms !== undefined

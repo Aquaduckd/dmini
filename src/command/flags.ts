@@ -4,6 +4,7 @@ export interface CommandFlags {
   append?: boolean;
   board?: string;
   corpus?: string;
+  layoutFilter?: "magic" | "thumb" | "regular";
   limit?: number;
   page?: number;
   renderMode?: RenderMode;
@@ -15,6 +16,7 @@ export interface ParseFlagsOptions {
   append?: boolean;
   board?: boolean;
   corpus?: boolean;
+  layoutFilter?: boolean;
   limit?: boolean;
   page?: boolean;
   renderMode?: boolean;
@@ -53,6 +55,30 @@ export function parseCommandArgs(
         throw new FlagParseError("Missing value for --corpus");
       }
       flags.corpus = value;
+      continue;
+    }
+
+    if (options.layoutFilter && part === "--magic") {
+      if (flags.layoutFilter) {
+        throw new FlagParseError("Use only one of --magic, --thumb, or --regular.");
+      }
+      flags.layoutFilter = "magic";
+      continue;
+    }
+
+    if (options.layoutFilter && part === "--thumb") {
+      if (flags.layoutFilter) {
+        throw new FlagParseError("Use only one of --magic, --thumb, or --regular.");
+      }
+      flags.layoutFilter = "thumb";
+      continue;
+    }
+
+    if (options.layoutFilter && part === "--regular") {
+      if (flags.layoutFilter) {
+        throw new FlagParseError("Use only one of --magic, --thumb, or --regular.");
+      }
+      flags.layoutFilter = "regular";
       continue;
     }
 
