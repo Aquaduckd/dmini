@@ -3,6 +3,12 @@ import { fetchLayoutApiMeta } from "../api/meta.js";
 import { PREFIX } from "../command/constants.js";
 import type { Command } from "../command/types.js";
 import { infoEmbed, replyEmbed } from "../discord/embeds.js";
+import {
+  getDminiSourceVersion,
+  getLayoutApiSourceVersion,
+  getMana2SourceVersion,
+  sourceFieldLabel,
+} from "../git/commitDate.js";
 
 const SOURCE_URL = "https://github.com/Aquaduckd/dmini";
 const LAYOUTAPI_SOURCE_URL = "https://github.com/Aquaduckd/layoutapi";
@@ -41,6 +47,12 @@ export const aboutCommand: Command = {
       console.error("Failed to fetch layout API meta:", error);
     }
 
+    const [dminiVersion, layoutApiVersion, mana2Version] = await Promise.all([
+      getDminiSourceVersion(),
+      getLayoutApiSourceVersion(),
+      getMana2SourceVersion(),
+    ]);
+
     const embed = infoEmbed(
       "dmini",
       "Browse, edit, and analyze keyboard layouts from layoutapi.",
@@ -50,17 +62,17 @@ export const aboutCommand: Command = {
         { name: "Uptime", value: formatUptime(), inline: true },
         { name: "Layouts", value: formatCount(layoutCount), inline: true },
         {
-          name: "Source",
+          name: sourceFieldLabel("Source", dminiVersion),
           value: `[github.com/Aquaduckd/dmini](${SOURCE_URL})`,
           inline: false,
         },
         {
-          name: "layoutapi",
+          name: sourceFieldLabel("layoutapi", layoutApiVersion),
           value: `[github.com/Aquaduckd/layoutapi](${LAYOUTAPI_SOURCE_URL})`,
           inline: false,
         },
         {
-          name: "mana2",
+          name: sourceFieldLabel("mana2", mana2Version),
           value: `[codeberg.org/Zakkkk/mana2](${MANA2_SOURCE_URL})`,
           inline: false,
         },
