@@ -8,6 +8,7 @@ import { copyCommand } from "../commands/copy.js";
 import { debugCommand } from "../commands/debug.js";
 import { examplesCommand } from "../commands/examples.js";
 import { findCommand } from "../commands/find.js";
+import { freqCommand, freqsCommand, columnCommand } from "../commands/freq.js";
 import { giftCommand } from "../commands/gift.js";
 import { helpCommand } from "../commands/help.js";
 import { layoutsCommand } from "../commands/layouts.js";
@@ -44,6 +45,9 @@ export function registerCommands(): void {
   registerCommand(layoutsCommand);
   registerCommand(analyzeCommand);
   registerCommand(findCommand);
+  registerCommand(freqCommand);
+  registerCommand(freqsCommand);
+  registerCommand(columnCommand);
   registerCommand(percentilesCommand);
   registerCommand(leaderboardCommand);
   registerCommand(examplesCommand);
