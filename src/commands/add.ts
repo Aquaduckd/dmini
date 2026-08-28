@@ -1,10 +1,10 @@
-import { AttachmentBuilder, EmbedBuilder } from "discord.js";
+import { AttachmentBuilder, ChannelType, EmbedBuilder } from "discord.js";
 import {
   createLayout,
   formatWriteApiError,
   LayoutApiError,
 } from "../api/layouts.js";
-import { PREFIX } from "../command/constants.js";
+import { PREFIX, stripIncomingPrefix } from "../command/constants.js";
 import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
@@ -27,7 +27,7 @@ import { renderKeyboardPng } from "../render/keyboard.js";
 
 function parseAddInput(
   content: string,
-  prefix: string,
+  dm: boolean,
 ): { args: string; matrix: string } | null {
   const fenceIndex = content.indexOf("```");
   if (fenceIndex === -1) {
@@ -35,11 +35,11 @@ function parseAddInput(
   }
 
   const header = content.slice(0, fenceIndex).trimEnd();
-  if (!header.startsWith(prefix)) {
+  const body = stripIncomingPrefix(header, dm);
+  if (body === null) {
     return null;
   }
 
-  const body = header.slice(prefix.length).trim();
   const space = body.indexOf(" ");
   if (space === -1 || body.slice(0, space).toLowerCase() !== "add") {
     return null;
@@ -76,7 +76,10 @@ export const addCommand: Command = {
     `${PREFIX}add mylayout --board stagger`,
   ],
   async execute({ message, args }) {
-    const input = parseAddInput(message.content, PREFIX);
+    const input = parseAddInput(
+      message.content,
+      message.channel.type === ChannelType.DM,
+    );
     if (!input) {
       await replyEmbed(
         message,

@@ -1,7 +1,9 @@
 import {
   Client,
+  ChannelType,
   Events,
   GatewayIntentBits,
+  Partials,
 } from "discord.js";
 import { config } from "./config.js";
 import { isAdmin } from "./config/admins.js";
@@ -41,8 +43,10 @@ export async function startBot(): Promise<void> {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.DirectMessages,
       GatewayIntentBits.MessageContent,
     ],
+    partials: [Partials.Channel],
   });
 
   globalState.__dminiClient = client;
@@ -72,6 +76,8 @@ export async function startBot(): Promise<void> {
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
 
+    const isDm = message.channel.type === ChannelType.DM;
+
     if (matchDeprecatedCminiPrefix(message.content)) {
       await replyEmbed(
         message,
@@ -80,7 +86,7 @@ export async function startBot(): Promise<void> {
       return;
     }
 
-    const parsed = parseMessage(message.content, PREFIX);
+    const parsed = parseMessage(message.content, PREFIX, isDm);
     if (!parsed) return;
 
     if (
@@ -101,10 +107,13 @@ export async function startBot(): Promise<void> {
       !command ||
       !(await userCanRunCommand(command, message.author.id))
     ) {
+      const commandLabel = isDm
+        ? parsed.name
+        : `${PREFIX}${parsed.name}`.trimEnd();
       await replyEmbed(
         message,
         errorEmbed(
-          `Unknown command: \`${PREFIX}${parsed.name}\`. Use \`${PREFIX}help\` to see available commands.`,
+          `Unknown command: \`${commandLabel}\`. Use \`${PREFIX}help\` to see available commands.`,
         ),
       );
       return;

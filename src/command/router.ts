@@ -63,22 +63,30 @@ export function registerCommands(): void {
   registerCommand(debugCommand);
 }
 
-export function parseMessage(
-  content: string,
-  prefix: string,
-): { name: string; args: string } | null {
-  if (!content.startsWith(prefix)) return null;
+import { PREFIX, stripIncomingPrefix } from "./constants.js";
 
-  const body = content.slice(prefix.length).trim();
-  if (!body) return null;
+function parseCommandBody(body: string): { name: string; args: string } | null {
+  const trimmed = body.trim();
+  if (!trimmed) return null;
 
-  const space = body.indexOf(" ");
+  const space = trimmed.indexOf(" ");
   if (space === -1) {
-    return { name: body.toLowerCase(), args: "" };
+    return { name: trimmed.toLowerCase(), args: "" };
   }
 
   return {
-    name: body.slice(0, space).toLowerCase(),
-    args: body.slice(space + 1).trim(),
+    name: trimmed.slice(0, space).toLowerCase(),
+    args: trimmed.slice(space + 1).trim(),
   };
+}
+
+export function parseMessage(
+  content: string,
+  prefix: string,
+  dm = false,
+): { name: string; args: string } | null {
+  void prefix;
+  const body = stripIncomingPrefix(content, dm);
+  if (body === null) return null;
+  return parseCommandBody(body);
 }

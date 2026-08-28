@@ -1,4 +1,4 @@
-export { PREFIX, DEPRECATED_CMINI_PREFIXES, matchDeprecatedCminiPrefix } from "./constants.js";
+export { DMINI_PREFIX, PREFIX, DEPRECATED_CMINI_PREFIXES, matchDeprecatedCminiPrefix, stripIncomingPrefix } from "./constants.js";
 export {
   buildCminiDeprecationMessage,
   parseDeprecatedCminiMessage,

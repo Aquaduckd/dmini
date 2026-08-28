@@ -172,10 +172,7 @@ export function buildCminiDeprecationMessage(content: string): string {
 
   const migration = resolveMigration(parsed.command, parsed.args);
   if (!migration) {
-    return (
-      `cmini is deprecated. dmini doesn't have a \`${parsed.command}\` command yet. ` +
-      `Use \`${PREFIX}help\` to see what's available.`
-    );
+    return `cmini has been replaced by dmini. Use \`${PREFIX}help\` to get started.`;
   }
 
   const suggestions = [
