@@ -21,17 +21,18 @@ import {
   isLowerIsBetter,
   resolveStatId,
 } from "../mana2/stats.js";
-import { valueToPercentile } from "../render/distribution.js";
+import { resolveDistRange, valueToPercentile } from "../render/distribution.js";
 import { renderHistogramPng } from "../render/histogram.js";
 
 export const distCommand: Command = {
   name: "dist",
   aliases: ["distribution"],
   description: "Show where a layout sits on a stat distribution",
-  usage: `${PREFIX}dist <stat> <layout> [--corpus <name>] [--min <value>] [--max <value>]`,
+  usage: `${PREFIX}dist <stat> <layout> [--corpus <name>] [--notail] [--min <value>] [--max <value>]`,
   examples: [
     `${PREFIX}dist vsb sturdy`,
     `${PREFIX}dist sfb gallium --corpus monkeyracer`,
+    `${PREFIX}dist sfb opal --notail`,
     `${PREFIX}dist sfb opal --min 0 --max 15`,
   ],
   async execute({ message, args }) {
@@ -40,12 +41,14 @@ export const distCommand: Command = {
     let corpusFlag: string | undefined;
     let rangeMin: number | undefined;
     let rangeMax: number | undefined;
+    let notail = false;
 
     try {
       const { positional, flags } = parseCommandArgs(args, {
         corpus: true,
         min: true,
         max: true,
+        notail: true,
       });
 
       if (positional.length !== 2) {
@@ -58,6 +61,7 @@ export const distCommand: Command = {
       corpusFlag = flags.corpus;
       rangeMin = flags.min;
       rangeMax = flags.max;
+      notail = flags.notail === true;
 
       if (rangeMin !== undefined && rangeMax !== undefined && rangeMin >= rangeMax) {
         await replyEmbed(message, errorEmbed("`--min` must be less than `--max`."));
@@ -146,17 +150,25 @@ export const distCommand: Command = {
         return;
       }
 
-      const dataMin = Math.min(...values, layoutValue);
-      const dataMax = Math.max(...values, layoutValue);
-      const effectiveMin = rangeMin ?? dataMin;
-      const effectiveMax = rangeMax ?? dataMax;
+      let effectiveMin: number | undefined;
+      let effectiveMax: number | undefined;
 
-      if (effectiveMax <= effectiveMin) {
-        await replyEmbed(
-          message,
-          errorEmbed("The graph range is invalid. `--min` must be less than `--max`."),
-        );
-        return;
+      if (notail || rangeMin !== undefined || rangeMax !== undefined) {
+        const range = resolveDistRange(values, {
+          notail,
+          min: rangeMin,
+          max: rangeMax,
+        });
+        effectiveMin = range.min;
+        effectiveMax = range.max;
+
+        if (effectiveMax <= effectiveMin) {
+          await replyEmbed(
+            message,
+            errorEmbed("The graph range is invalid. `--min` must be less than `--max`."),
+          );
+          return;
+        }
       }
 
       const formatValue = (value: number) =>
@@ -168,8 +180,8 @@ export const distCommand: Command = {
         layoutValue,
         values,
         formatValue,
-        rangeMin,
-        rangeMax,
+        rangeMin: effectiveMin,
+        rangeMax: effectiveMax,
       });
 
       const filename = `${layout.name.toLowerCase()}-${stat.id}-dist.png`;

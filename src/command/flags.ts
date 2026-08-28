@@ -11,6 +11,7 @@ export interface CommandFlags {
   limit?: number;
   max?: number;
   min?: number;
+  notail?: boolean;
   page?: number;
   renderMode?: RenderMode;
   search?: string;
@@ -28,6 +29,7 @@ export interface ParseFlagsOptions {
   limit?: boolean;
   max?: boolean;
   min?: boolean;
+  notail?: boolean;
   page?: boolean;
   renderMode?: boolean;
   search?: boolean;
@@ -110,6 +112,11 @@ export function parseCommandArgs(
 
     if (options.likes && part === "--likes") {
       flags.likes = true;
+      continue;
+    }
+
+    if (options.notail && part === "--notail") {
+      flags.notail = true;
       continue;
     }
 

@@ -1,6 +1,8 @@
 import { createCanvas, type SKRSContext2D } from "@napi-rs/canvas";
 import { BACKGROUND_COLOR, KEY_LABEL_FONT_FAMILY } from "./constants.js";
 import {
+  gaussianKde,
+  silvermanBandwidth,
   valueToPercentile,
   type DistributionRenderOptions,
 } from "./distribution.js";
@@ -26,34 +28,6 @@ function plotWidth(): number {
 
 function plotHeight(): number {
   return HEIGHT - PADDING.top - PADDING.bottom;
-}
-
-function silvermanBandwidth(values: number[]): number {
-  const n = values.length;
-  if (n < 2) return 1;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const mean = values.reduce((sum, value) => sum + value, 0) / n;
-  const variance =
-    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / n;
-  const std = Math.sqrt(variance) || 1;
-  const q1 = sorted[Math.floor((n - 1) * 0.25)] ?? sorted[0]!;
-  const q3 = sorted[Math.floor((n - 1) * 0.75)] ?? sorted[n - 1]!;
-  const iqr = q3 - q1;
-  const scale = Math.min(std, iqr > 0 ? iqr / 1.34 : std) || std || 1;
-  return 1.06 * scale * n ** -0.2;
-}
-
-function gaussianKde(values: number[], bandwidth: number): (x: number) => number {
-  const factor = 1 / (bandwidth * Math.sqrt(2 * Math.PI));
-  return (x: number) => {
-    let sum = 0;
-    for (const value of values) {
-      const z = (x - value) / bandwidth;
-      sum += Math.exp(-0.5 * z * z);
-    }
-    return (sum / values.length) * factor;
-  };
 }
 
 function valueToX(
