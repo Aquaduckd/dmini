@@ -13,6 +13,7 @@ import type { Command } from "../command/types.js";
 import {
   ComboParseError,
   formatCombosText,
+  mergeCombos,
   parseCombos,
 } from "../layout/combos.js";
 import { layoutOwnedByUser } from "../layout/types.js";
@@ -27,8 +28,8 @@ import { replyLoggedError } from "../discord/errors.js";
 
 export const setcombosCommand: Command = {
   name: "setcombos",
-  description: "Set combos on one of your layouts",
-  usage: `${PREFIX}setcombos <layout> [--clear]`,
+  description: "Set, append, or clear combos on one of your layouts",
+  usage: `${PREFIX}setcombos <layout> [--append|--clear]`,
   notes: [
     "Include combos in a fenced code block, one per line:",
     "```",
@@ -36,10 +37,12 @@ export const setcombosCommand: Command = {
     "ea @ symbols",
     "```",
     "Format: inputs output [layer]. Omit layer for the base layer.",
+    "Without --append, existing combos are replaced. With --append, combos merge by inputs and layer.",
     "Use --clear to remove all combos without a code block.",
   ].join("\n"),
   examples: [
     `${PREFIX}setcombos opal`,
+    `${PREFIX}setcombos opal --append`,
     `${PREFIX}setcombos opal --clear`,
   ],
   async execute({ message }) {
@@ -55,13 +58,16 @@ export const setcombosCommand: Command = {
     }
 
     let layoutName = "";
+    let append = false;
     let clear = false;
 
     try {
       const { positional, flags } = parseCommandArgs(input.args, {
+        append: true,
         clear: true,
       });
       layoutName = positional[0]?.trim() ?? "";
+      append = flags.append ?? false;
       clear = flags.clear ?? false;
 
       if (!layoutName || positional.length > 1) {
@@ -74,6 +80,14 @@ export const setcombosCommand: Command = {
         return;
       }
       throw error;
+    }
+
+    if (append && clear) {
+      await replyEmbed(
+        message,
+        errorEmbed("Use only one of `--append` or `--clear`."),
+      );
+      return;
     }
 
     if (clear && input.codeBlock) {
@@ -106,19 +120,20 @@ export const setcombosCommand: Command = {
       }
 
       if (clear) {
-        layout.combos = [];
-      } else {
-        const combos = parseCombos(input.codeBlock!, layout);
-        if (combos.length === 0) {
-          await replyEmbed(message, errorEmbed("No combos to set."));
+        if (!layout.combos?.length) {
+          await replyEmbed(
+            message,
+            infoEmbed(
+              "No combos",
+              `\`${layout.name}\` already has no combos.`,
+            ),
+          );
           return;
         }
-        layout.combos = combos;
-      }
 
-      await updateLayout(layout);
+        layout.combos = [];
+        await updateLayout(layout);
 
-      if (clear) {
         await replyEmbed(
           message,
           infoEmbed(
@@ -129,8 +144,20 @@ export const setcombosCommand: Command = {
         return;
       }
 
+      const combos = parseCombos(input.codeBlock!, layout);
+      if (combos.length === 0) {
+        await replyEmbed(message, errorEmbed("No combos to set."));
+        return;
+      }
+      layout.combos = append
+        ? mergeCombos(layout.combos ?? [], combos)
+        : combos;
+
+      await updateLayout(layout);
+
+      const action = append ? "Appended to" : "Set combos on";
       const formatted = formatCombosText(layout.combos);
-      const summary = `Set combos on \`${layout.name}\` (${layout.combos!.length} combo${layout.combos!.length === 1 ? "" : "s"} total).`;
+      const summary = `${action} \`${layout.name}\` (${layout.combos.length} combo${layout.combos.length === 1 ? "" : "s"} total).`;
 
       if (fitsInCodeBlock(formatted)) {
         await replyEmbed(

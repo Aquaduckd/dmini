@@ -26,10 +26,10 @@ import {
 } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 
-export const addmagicCommand: Command = {
-  name: "addmagic",
-  description: "Set or append magic rules on one of your layouts",
-  usage: `${PREFIX}addmagic <layout> [--append]`,
+export const setmagicCommand: Command = {
+  name: "setmagic",
+  description: "Set, append, or clear magic rules on one of your layouts",
+  usage: `${PREFIX}setmagic <layout> [--append|--clear]`,
   notes: [
     "Include rules in a fenced code block, one per line:",
     "```",
@@ -38,40 +38,40 @@ export const addmagicCommand: Command = {
     "```",
     "Format: inputs output [type]. Types: repeat, magic, adaptive, chiral.",
     "Without --append, existing rules are replaced. With --append, rules merge by inputs.",
+    "Use --clear to remove all magic rules without a code block.",
   ].join("\n"),
   examples: [
-    `${PREFIX}addmagic opal`,
-    `${PREFIX}addmagic opal --append`,
+    `${PREFIX}setmagic opal`,
+    `${PREFIX}setmagic opal --append`,
+    `${PREFIX}setmagic opal --clear`,
   ],
   async execute({ message }) {
     const input = parseCommandWithOptionalCodeBlock(
       message.content,
       PREFIX,
-      "addmagic",
+      "setmagic",
     );
 
-    if (!input?.codeBlock) {
-      await replyEmbed(
-        message,
-        errorEmbed("Missing code block.", "Usage").setDescription(
-          `Usage: \`${addmagicCommand.usage}\`\nSee \`${PREFIX}help addmagic\` for the rule format.`,
-        ),
-      );
+    if (!input) {
+      await replyUsage({ message, args: "" }, setmagicCommand);
       return;
     }
 
     let layoutName = "";
     let append = false;
+    let clear = false;
 
     try {
       const { positional, flags } = parseCommandArgs(input.args, {
         append: true,
+        clear: true,
       });
       layoutName = positional[0]?.trim() ?? "";
       append = flags.append ?? false;
+      clear = flags.clear ?? false;
 
       if (!layoutName || positional.length > 1) {
-        await replyUsage({ message, args: input.args }, addmagicCommand);
+        await replyUsage({ message, args: input.args }, setmagicCommand);
         return;
       }
     } catch (error) {
@@ -82,13 +82,33 @@ export const addmagicCommand: Command = {
       throw error;
     }
 
-    try {
-      const rules = parseMagicRules(input.codeBlock);
-      if (rules.length === 0) {
-        await replyEmbed(message, errorEmbed("No magic rules to add."));
-        return;
-      }
+    if (append && clear) {
+      await replyEmbed(
+        message,
+        errorEmbed("Use only one of `--append` or `--clear`."),
+      );
+      return;
+    }
 
+    if (clear && input.codeBlock) {
+      await replyEmbed(
+        message,
+        errorEmbed("Use either a code block or `--clear`, not both."),
+      );
+      return;
+    }
+
+    if (!clear && !input.codeBlock) {
+      await replyEmbed(
+        message,
+        errorEmbed("Missing code block.", "Usage").setDescription(
+          `Usage: \`${setmagicCommand.usage}\`\nSee \`${PREFIX}help setmagic\` for the rule format.`,
+        ),
+      );
+      return;
+    }
+
+    try {
       const layout = await fetchLayoutDoc(layoutName);
 
       if (!layoutOwnedByUser(layout, message.author.id)) {
@@ -96,6 +116,37 @@ export const addmagicCommand: Command = {
           message,
           errorEmbed(`You don't own any layout named \`${layoutName}\`.`),
         );
+        return;
+      }
+
+      if (clear) {
+        if (!layout.magic?.length) {
+          await replyEmbed(
+            message,
+            infoEmbed(
+              "No magic rules",
+              `\`${layout.name}\` already has no magic rules.`,
+            ),
+          );
+          return;
+        }
+
+        layout.magic = [];
+        await updateLayout(layout);
+
+        await replyEmbed(
+          message,
+          infoEmbed(
+            "Magic rules cleared",
+            `Removed all magic rules from \`${layout.name}\`.`,
+          ),
+        );
+        return;
+      }
+
+      const rules = parseMagicRules(input.codeBlock!);
+      if (rules.length === 0) {
+        await replyEmbed(message, errorEmbed("No magic rules to set."));
         return;
       }
 

@@ -80,6 +80,27 @@ export function parseCombos(
   return combos;
 }
 
+export function mergeCombos(
+  existing: LayoutCombo[],
+  incoming: LayoutCombo[],
+): LayoutCombo[] {
+  const index = new Map(existing.map((combo, i) => [comboIdentity(combo), i]));
+  const merged = [...existing];
+
+  for (const combo of incoming) {
+    const identity = comboIdentity(combo);
+    const existingIndex = index.get(identity);
+    if (existingIndex !== undefined) {
+      merged[existingIndex] = combo;
+    } else {
+      index.set(identity, merged.length);
+      merged.push(combo);
+    }
+  }
+
+  return merged;
+}
+
 export function formatComboRuleLine(combo: LayoutCombo): string {
   return `${combo.inputs} → ${combo.output}`;
 }

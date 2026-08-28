@@ -9,7 +9,7 @@ import {
 } from "../mana2/awards.js";
 import { layoutHasMagicRules, layoutHasThumbKeys } from "../mana2/convert.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
-import { layoutHasComboRules } from "./combos.js";
+import { formatComboCount, layoutHasComboRules } from "./combos.js";
 import { formatMagicRuleCount } from "./magic.js";
 import {
   formatLayoutCreatedAt,
@@ -83,6 +83,10 @@ export async function presentLayout(
   const magicRuleCount = layout.magic?.length ?? 0;
   if (magicRuleCount > 0) {
     footerParts.push(formatMagicRuleCount(magicRuleCount));
+  }
+  const comboCount = layout.combos?.length ?? 0;
+  if (comboCount > 0) {
+    footerParts.push(formatComboCount(comboCount));
   }
   if (renderMode === "heatmap") {
     footerParts.push(`Heatmap · ${corpus} corpus`);
