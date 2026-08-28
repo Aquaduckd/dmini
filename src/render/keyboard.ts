@@ -12,7 +12,12 @@ import {
   KEY_W,
   ROW_OFFSET,
 } from "./constants.js";
-import { keyTextStrokeColor } from "./colors.js";
+import { keyTextColor, keyTextStrokeColor } from "./colors.js";
+import {
+  buildOldKeyLookup,
+  compareKeyColor,
+  type OldKeyLookup,
+} from "./compare.js";
 import {
   DEFAULT_FINGER_PALETTE,
   fingerColor,
@@ -21,12 +26,13 @@ import {
 } from "./fingermap.js";
 import { keyHeatColor, type HeatContext } from "./heatmap.js";
 
-export type KeyboardRenderMode = "fingermap" | "heatmap";
+export type KeyboardRenderMode = "fingermap" | "heatmap" | "compare";
 
 export interface KeyboardRenderOptions {
   mode?: KeyboardRenderMode;
   heat?: HeatContext;
   fingermapPalette?: FingermapPaletteId;
+  compareOldKeys?: RenderKey[];
 }
 
 interface MeasuredRow {
@@ -131,23 +137,41 @@ function keyLabelFontSize(label: string): number {
   return baseSize;
 }
 
+interface DrawKeyOptions {
+  mode: KeyboardRenderMode;
+  heat?: HeatContext;
+  fingermapPalette: FingermapPaletteId;
+  compareOldKeys?: OldKeyLookup;
+}
+
 function drawKey(
   context: SKRSContext2D,
   key: RenderKey,
   x: number,
   y: number,
-  options: Required<Pick<KeyboardRenderOptions, "mode" | "fingermapPalette">> &
-    Pick<KeyboardRenderOptions, "heat">,
+  options: DrawKeyOptions,
 ): void {
-  const background =
-    options.mode === "heatmap" && options.heat
-      ? keyHeatColor(options.heat, key.c)
-      : fingerColor(key.finger, options.fingermapPalette);
-  const textColor = fingerTextColor(
-    key.finger,
-    background,
-    options.fingermapPalette,
-  );
+  let background: string;
+  let textColor: string;
+
+  if (options.mode === "compare" && options.compareOldKeys) {
+    background = compareKeyColor(key, options.compareOldKeys);
+    textColor = keyTextColor(background);
+  } else if (options.mode === "heatmap" && options.heat) {
+    background = keyHeatColor(options.heat, key.c);
+    textColor = fingerTextColor(
+      key.finger,
+      background,
+      options.fingermapPalette,
+    );
+  } else {
+    background = fingerColor(key.finger, options.fingermapPalette);
+    textColor = fingerTextColor(
+      key.finger,
+      background,
+      options.fingermapPalette,
+    );
+  }
   const label = formatKeyLabel(key.c);
   const fontSize = keyLabelFontSize(label);
 
@@ -176,8 +200,16 @@ export function renderKeyboardPng(
 ): Buffer {
   const mode = options.mode ?? "fingermap";
   const useHeatmap = mode === "heatmap" && options.heat !== undefined;
-  const renderMode = useHeatmap ? "heatmap" : "fingermap";
+  const useCompare = mode === "compare" && options.compareOldKeys !== undefined;
+  const renderMode: KeyboardRenderMode = useCompare
+    ? "compare"
+    : useHeatmap
+      ? "heatmap"
+      : "fingermap";
   const fingermapPalette = options.fingermapPalette ?? DEFAULT_FINGER_PALETTE;
+  const compareOldKeys = useCompare
+    ? buildOldKeyLookup(options.compareOldKeys!)
+    : undefined;
 
   const measurement = measureKeyboard(keys, staggered);
   const canvas = createCanvas(
@@ -198,6 +230,7 @@ export function renderKeyboardPng(
         mode: renderMode,
         heat: options.heat,
         fingermapPalette,
+        compareOldKeys,
       });
     }
   }

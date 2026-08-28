@@ -5,7 +5,7 @@ import { PREFIX } from "../command/constants.js";
 import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
-import { resolveCorpus, resolveFingermapPalette } from "../config/user.js";
+import { resolveCorpus } from "../config/user.js";
 import { errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
@@ -94,7 +94,10 @@ export const compareCommand: Command = {
         return;
       }
 
-      const newKeys = layoutToRenderKeys(newLayout);
+      const [newKeys, oldKeys] = [
+        layoutToRenderKeys(newLayout),
+        layoutToRenderKeys(oldLayout),
+      ];
       if (newKeys.length === 0) {
         await replyEmbed(
           message,
@@ -103,16 +106,15 @@ export const compareCommand: Command = {
         return;
       }
 
-      const [oldAnalysis, newAnalysis, fingermapPalette, author] = await Promise.all([
+      const [oldAnalysis, newAnalysis, author] = await Promise.all([
         analyzeLayout(oldLayout, { corpus }),
         analyzeLayout(newLayout, { corpus }),
-        resolveFingermapPalette(message.author.id),
         resolveLayoutAuthor(newLayout.user),
       ]);
 
       const png = renderKeyboardPng(newKeys, isStaggeredBoard(newLayout.board), {
-        mode: "fingermap",
-        fingermapPalette,
+        mode: "compare",
+        compareOldKeys: oldKeys,
       });
 
       const filename = `${newLayout.name.toLowerCase()}-vs-${oldLayout.name.toLowerCase()}.png`;
