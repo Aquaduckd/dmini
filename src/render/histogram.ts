@@ -194,9 +194,9 @@ export function renderHistogramPng(options: HistogramRenderOptions): Buffer {
   drawLabel(
     ctx,
     `${statLabel} distribution · ${layoutName}`,
-    PADDING.left,
+    onRightHalf ? PADDING.left : WIDTH - PADDING.right,
     18,
-    "left",
+    onRightHalf ? "left" : "right",
   );
   drawLabel(
     ctx,
