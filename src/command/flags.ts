@@ -9,6 +9,8 @@ export interface CommandFlags {
   layoutFilter?: "magic" | "thumb" | "regular";
   likes?: boolean;
   limit?: number;
+  max?: number;
+  min?: number;
   page?: number;
   renderMode?: RenderMode;
   search?: string;
@@ -24,6 +26,8 @@ export interface ParseFlagsOptions {
   layoutFilter?: boolean;
   likes?: boolean;
   limit?: boolean;
+  max?: boolean;
+  min?: boolean;
   page?: boolean;
   renderMode?: boolean;
   search?: boolean;
@@ -109,6 +113,24 @@ export function parseCommandArgs(
       continue;
     }
 
+    if (options.max && part === "--max") {
+      const value = parts[++index];
+      if (!value || value.startsWith("-")) {
+        throw new FlagParseError("Missing value for --max");
+      }
+      flags.max = parseNumericFlag(value, "--max");
+      continue;
+    }
+
+    if (options.min && part === "--min") {
+      const value = parts[++index];
+      if (!value || value.startsWith("-")) {
+        throw new FlagParseError("Missing value for --min");
+      }
+      flags.min = parseNumericFlag(value, "--min");
+      continue;
+    }
+
     if (options.limit && (part === "--limit" || part === "-l")) {
       const value = parts[++index];
       if (!value || value.startsWith("-")) {
@@ -184,4 +206,15 @@ export class FlagParseError extends Error {
     super(message);
     this.name = "FlagParseError";
   }
+}
+
+function parseNumericFlag(value: string, flagName: string): number {
+  const normalized = value.trim().endsWith("%")
+    ? value.trim().slice(0, -1).trim()
+    : value.trim();
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    throw new FlagParseError(`${flagName} must be a number`);
+  }
+  return parsed;
 }

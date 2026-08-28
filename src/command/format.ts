@@ -8,7 +8,7 @@ const HELP_GROUPS: { label: string; names: string[] }[] = [
   { label: "Layouts", names: ["layout", "inspect", "layouts", "random", "magic"] },
   { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
   { label: "Social", names: ["like", "likes", "unlike", "gift"] },
-  { label: "Analysis", names: ["analyze", "find", "freq", "freqs", "column", "leaderboard", "percentiles", "examples"] },
+  { label: "Analysis", names: ["analyze", "dist", "find", "freq", "freqs", "column", "leaderboard", "percentiles", "examples"] },
   { label: "Settings", names: ["config"] },
   { label: "Admin", names: ["debug"] },
 ];

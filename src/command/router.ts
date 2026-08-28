@@ -6,6 +6,7 @@ import { clearmagicCommand } from "../commands/clearmagic.js";
 import { configCommand } from "../commands/config.js";
 import { copyCommand } from "../commands/copy.js";
 import { debugCommand } from "../commands/debug.js";
+import { distCommand } from "../commands/dist.js";
 import { examplesCommand } from "../commands/examples.js";
 import { findCommand } from "../commands/find.js";
 import { freqCommand, freqsCommand, columnCommand } from "../commands/freq.js";
@@ -54,6 +55,7 @@ export function registerCommands(): void {
   registerCommand(freqsCommand);
   registerCommand(columnCommand);
   registerCommand(percentilesCommand);
+  registerCommand(distCommand);
   registerCommand(leaderboardCommand);
   registerCommand(examplesCommand);
   registerCommand(suggestCommand);
