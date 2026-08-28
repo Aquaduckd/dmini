@@ -101,6 +101,7 @@ const CMINI_COMMAND_MAP: Record<string, MigrationRule> = {
     command: "about",
     note: "cmini `stats` showed global bot stats. `about` is the closest dmini equivalent.",
   }),
+  compare: "compare",
   mod: (args) => ({
     command: "swap",
     args,

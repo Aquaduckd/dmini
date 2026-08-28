@@ -471,3 +471,183 @@ export function buildAnalysisEmbed(
 
   return embed;
 }
+
+const DELTA_NEUTRAL_EPSILON_PERCENT = 0.005;
+const DELTA_NEUTRAL_EPSILON_RAW = 0.01;
+
+type DeltaSentiment = "good" | "bad" | "neutral";
+
+function getStatDelta(
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+  statId: string,
+): number | undefined {
+  const oldValue = getStatValue(oldAnalysis, statId);
+  const newValue = getStatValue(newAnalysis, statId);
+  if (oldValue === undefined || newValue === undefined) return undefined;
+  return newValue - oldValue;
+}
+
+function formatDeltaValue(stat: StatDefinition, delta: number): string {
+  const sign = delta > 0 ? "+" : "";
+  if (stat.percent) {
+    if (Math.abs(delta) >= 99.95) {
+      return `${sign}${Math.round(delta)}%`;
+    }
+    return `${sign}${delta.toFixed(stat.decimals ?? 1)}%`;
+  }
+  return `${sign}${delta.toFixed(stat.decimals ?? 2)}`;
+}
+
+function deltaSentiment(statId: string, stat: StatDefinition, delta: number): DeltaSentiment {
+  const neutralEpsilon = stat.percent
+    ? DELTA_NEUTRAL_EPSILON_PERCENT
+    : DELTA_NEUTRAL_EPSILON_RAW;
+  if (Math.abs(delta) < neutralEpsilon) {
+    return "neutral";
+  }
+
+  if (LOWER_IS_BETTER_STATS.has(statId) || statId.startsWith("finger-usage-")) {
+    return delta < 0 ? "good" : "bad";
+  }
+
+  if (HIGHER_IS_BETTER_STATS.has(statId)) {
+    return delta > 0 ? "good" : "bad";
+  }
+
+  return "neutral";
+}
+
+const DELTA_COLORS: Record<Exclude<DeltaSentiment, "neutral">, string> = {
+  good: ANSI_CYAN,
+  bad: ANSI_RED,
+};
+
+function colorizeDeltaText(
+  plainText: string,
+  statId: string,
+  stat: StatDefinition,
+  delta: number,
+): string {
+  const sentiment = deltaSentiment(statId, stat, delta);
+  if (sentiment === "neutral") return plainText;
+  return `${DELTA_COLORS[sentiment]}${plainText}${ANSI_RESET}`;
+}
+
+function compareValueWidthsForSection(
+  section: StatSection,
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+): number[] {
+  return Array.from({ length: section.columns }, (_, colIndex) =>
+    Math.max(
+      0,
+      ...section.lines.flatMap((line) => {
+        const stat = line[colIndex];
+        if (!stat) return [];
+        const delta = getStatDelta(oldAnalysis, newAnalysis, stat.id);
+        if (delta === undefined) return [];
+        return formatDeltaValue(stat, delta).length;
+      }),
+    ),
+  );
+}
+
+function formatCompareCellAligned(
+  stat: StatDefinition,
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+  labelWidth: number,
+  valueWidth: number,
+  colWidth: number,
+): string | null {
+  const delta = getStatDelta(oldAnalysis, newAnalysis, stat.id);
+  if (delta === undefined) return null;
+
+  const plainValue = formatDeltaValue(stat, delta).padStart(valueWidth);
+  const visibleCell = `${stat.label.padEnd(labelWidth)} ${plainValue}`;
+  const pad = " ".repeat(Math.max(0, colWidth - visibleCell.length));
+  const coloredValue = colorizeDeltaText(plainValue, stat.id, stat, delta);
+
+  return `${stat.label.padEnd(labelWidth)} ${coloredValue}${pad}`;
+}
+
+function formatCompareSectionRows(
+  section: StatSection,
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+): string[] {
+  const colWidth = colWidthFor(section.columns);
+  const labelWidths = labelWidthsForSection(section);
+  const valueWidths = compareValueWidthsForSection(section, oldAnalysis, newAnalysis);
+  const rows: string[] = [];
+
+  for (const line of section.lines) {
+    const cells = Array.from({ length: section.columns }, (_, cellIndex) => {
+      const stat = line[cellIndex];
+      return stat
+        ? formatCompareCellAligned(
+            stat,
+            oldAnalysis,
+            newAnalysis,
+            labelWidths[cellIndex]!,
+            valueWidths[cellIndex]!,
+            colWidth,
+          )
+        : null;
+    });
+
+    if (cells.every((cell) => cell === null)) continue;
+
+    while (cells.length > 0 && cells[cells.length - 1] === null) {
+      cells.pop();
+    }
+
+    rows.push(
+      `${ROW_INDENT}${cells
+        .map((cell) => cell ?? "".padEnd(colWidth))
+        .join(COLUMN_GAP)
+        .trimEnd()}`,
+    );
+  }
+
+  return rows;
+}
+
+export function formatCompareText(
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+): string {
+  const sections: string[] = [];
+
+  for (const section of sectionsForAnalysis(newAnalysis)) {
+    const rows = formatCompareSectionRows(section, oldAnalysis, newAnalysis);
+    if (rows.length === 0) continue;
+    sections.push(section.title, ...rows, "");
+  }
+
+  return sections.join("\n").trimEnd();
+}
+
+export function buildCompareEmbed(
+  oldLayoutName: string,
+  newLayoutName: string,
+  oldAnalysis: Mana2Analysis,
+  newAnalysis: Mana2Analysis,
+  imageFilename: string,
+  corpus = "monkeyracer",
+  author?: string,
+): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setColor(Colors.primary)
+    .setTitle(`${newLayoutName} (new) vs ${oldLayoutName} (old)`)
+    .setDescription(ansiCodeBlock(formatCompareText(oldAnalysis, newAnalysis)))
+    .setImage(`attachment://${imageFilename}`)
+    .setFooter({ text: `Corpus: ${corpus} · mana2` });
+
+  if (author) {
+    embed.setAuthor({ name: author });
+  }
+
+  return embed;
+}

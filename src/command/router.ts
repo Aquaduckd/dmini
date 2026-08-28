@@ -3,6 +3,7 @@ import { addmagicCommand } from "../commands/addmagic.js";
 import { addCommand } from "../commands/add.js";
 import { analyzeCommand } from "../commands/analyze.js";
 import { clearmagicCommand } from "../commands/clearmagic.js";
+import { compareCommand } from "../commands/compare.js";
 import { configCommand } from "../commands/config.js";
 import { copyCommand } from "../commands/copy.js";
 import { debugCommand } from "../commands/debug.js";
@@ -50,6 +51,7 @@ export function registerCommands(): void {
   registerCommand(magicCommand);
   registerCommand(layoutsCommand);
   registerCommand(analyzeCommand);
+  registerCommand(compareCommand);
   registerCommand(findCommand);
   registerCommand(freqCommand);
   registerCommand(freqsCommand);
