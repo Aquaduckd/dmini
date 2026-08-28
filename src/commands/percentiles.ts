@@ -130,6 +130,7 @@ export const percentilesCommand: Command = {
         author,
         layoutLikeCount(layout),
         percentileTable.layout_count,
+        layout.link,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });

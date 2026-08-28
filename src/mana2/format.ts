@@ -1,5 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import { Colors, ansiCodeBlock, textCodeBlock } from "../discord/embeds.js";
+import { applyLayoutEmbedUrl } from "../layout/link.js";
 import { formatLikeCount } from "../layout/types.js";
 import { percentileFromCutoffs } from "./percentiles.js";
 import { getStatValue, type Mana2Analysis } from "./parse.js";
@@ -406,6 +407,7 @@ export function buildPercentilesEmbed(
   author?: string,
   likeCount?: number,
   layoutCount?: number,
+  link?: string,
 ): EmbedBuilder {
   const footerParts: string[] = [];
   if (likeCount !== undefined) {
@@ -426,6 +428,8 @@ export function buildPercentilesEmbed(
   if (author) {
     embed.setAuthor({ name: author });
   }
+
+  applyLayoutEmbedUrl(embed, link);
 
   return embed;
 }
@@ -454,6 +458,7 @@ export function buildAnalysisEmbed(
   corpus = "monkeyracer",
   author?: string,
   cutoffs?: Record<string, number[]>,
+  link?: string,
 ): EmbedBuilder {
   const text = formatAnalysisText(analysis, cutoffs);
   const description = cutoffs ? ansiCodeBlock(text) : textCodeBlock(text);
@@ -468,6 +473,8 @@ export function buildAnalysisEmbed(
   if (author) {
     embed.setAuthor({ name: author });
   }
+
+  applyLayoutEmbedUrl(embed, link);
 
   return embed;
 }
@@ -637,6 +644,7 @@ export function buildCompareEmbed(
   imageFilename: string,
   corpus = "monkeyracer",
   author?: string,
+  link?: string,
 ): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(Colors.primary)
@@ -648,6 +656,8 @@ export function buildCompareEmbed(
   if (author) {
     embed.setAuthor({ name: author });
   }
+
+  applyLayoutEmbedUrl(embed, link);
 
   return embed;
 }

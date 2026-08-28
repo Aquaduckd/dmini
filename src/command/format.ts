@@ -5,8 +5,8 @@ import type { Command, CommandContext } from "./types.js";
 
 const HELP_GROUPS: { label: string; names: string[] }[] = [
   { label: "General", names: ["help", "about", "suggest"] },
-  { label: "Layouts", names: ["layout", "inspect", "layouts", "random", "magic"] },
-  { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
+  { label: "Layouts", names: ["layout", "inspect", "layouts", "random", "magic", "combos"] },
+  { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setlink", "clearlink", "setcombos", "setboard", "clearmagic", "swap"] },
   { label: "Social", names: ["like", "likes", "unlike", "gift"] },
   { label: "Analysis", names: ["analyze", "compare", "dist", "find", "freq", "freqs", "column", "leaderboard", "percentiles", "examples"] },
   { label: "Settings", names: ["config"] },

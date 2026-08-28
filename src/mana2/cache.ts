@@ -5,6 +5,7 @@ import { BOT_DEFAULT_CORPUS } from "../config/user.js";
 import { isAnalyzableLayout, type LayoutDoc } from "../layout/types.js";
 import { runMana2ForLayout, sanitizeTempName } from "./cli.js";
 import { layoutHasMagicRules, layoutHasThumbKeys } from "./convert.js";
+import { layoutHasComboRules } from "../layout/combos.js";
 import { resolveDownloadedCorpus } from "./corpus.js";
 import {
   analysisFromRecord,
@@ -24,6 +25,7 @@ export interface LayoutCacheEntry {
   analyzer_version: number;
   has_magic?: boolean;
   has_thumbs?: boolean;
+  has_combos?: boolean;
   corpora: Record<string, Record<string, number>>;
 }
 
@@ -191,6 +193,7 @@ export async function computeAndCacheLayoutStats(
   entry.analyzer_version = ANALYZER_VERSION;
   entry.has_magic = layoutHasMagicRules(layout);
   entry.has_thumbs = layoutHasThumbKeys(layout);
+  entry.has_combos = layoutHasComboRules(layout);
   entry.corpora[corpus] = stats;
 
   await writeLayoutCache(entry);

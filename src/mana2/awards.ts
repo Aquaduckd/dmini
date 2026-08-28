@@ -11,6 +11,7 @@ export const LIKES_TIER = "❤️";
 export const LIKES_TIER_MIN = 5;
 export const MAGIC_BADGE = "✨";
 export const THUMB_BADGE = "👍";
+export const COMBO_BADGE = "🔗";
 
 export const AWARD_STAT_IDS = [
   "sfb",
@@ -309,6 +310,7 @@ export function formatLeaderboardRowBadges(
 export function formatLayoutPropertyBadges(options: {
   hasMagic: boolean;
   hasThumbs: boolean;
+  hasCombos?: boolean;
 }): string {
   const badges: string[] = [];
   if (options.hasMagic) {
@@ -316,6 +318,9 @@ export function formatLayoutPropertyBadges(options: {
   }
   if (options.hasThumbs) {
     badges.push(THUMB_BADGE);
+  }
+  if (options.hasCombos) {
+    badges.push(COMBO_BADGE);
   }
   return badges.join(" ");
 }
@@ -327,6 +332,7 @@ export function collectLayoutAwardBadges(
     likesAwards?: LikesAwards | null;
     hasMagic?: boolean;
     hasThumbs?: boolean;
+    hasCombos?: boolean;
   },
 ): string[] {
   const badges: string[] = [];
@@ -350,6 +356,9 @@ export function collectLayoutAwardBadges(
   }
   if (options?.hasThumbs) {
     badges.push(THUMB_BADGE);
+  }
+  if (options?.hasCombos) {
+    badges.push(COMBO_BADGE);
   }
 
   return badges;
@@ -404,7 +413,7 @@ function collectAwardedLayoutNames(
 
 export async function buildAwardsLeaderboard(options: {
   corpus: string;
-  layoutMetadata?: Map<string, { hasMagic: boolean; hasThumbs: boolean }>;
+  layoutMetadata?: Map<string, { hasMagic: boolean; hasThumbs: boolean; hasCombos?: boolean }>;
 }): Promise<{
   corpus: string;
   entries: AwardsLeaderboardEntry[];
@@ -423,6 +432,7 @@ export async function buildAwardsLeaderboard(options: {
       likesAwards,
       hasMagic: metadata?.hasMagic,
       hasThumbs: metadata?.hasThumbs,
+      hasCombos: metadata?.hasCombos,
     });
     if (badges.length === 0) continue;
 
@@ -450,6 +460,7 @@ export function formatLayoutAwardBadges(
     likesAwards?: LikesAwards | null;
     hasMagic?: boolean;
     hasThumbs?: boolean;
+    hasCombos?: boolean;
   },
 ): string {
   return collectLayoutAwardBadges(layoutName, awards, options).join(" ");

@@ -75,12 +75,16 @@ export function stringifyLayoutDoc(layout: LayoutDoc): string {
     );
   }
 
-  if (layout.link) {
+  if (layout.link !== undefined) {
     parts.push(`"link":${JSON.stringify(layout.link)}`);
   }
 
   if (layout.magic !== undefined) {
     parts.push(`"magic":${JSON.stringify(layout.magic)}`);
+  }
+
+  if (layout.combos !== undefined) {
+    parts.push(`"combos":${JSON.stringify(layout.combos)}`);
   }
 
   return `{${parts.join(",")}}`;

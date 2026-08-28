@@ -10,6 +10,12 @@ export interface LayoutMagicRule {
   type?: string;
 }
 
+export interface LayoutCombo {
+  inputs: string;
+  output: string;
+  layer?: string;
+}
+
 export interface LayoutDoc {
   name: string;
   board: string;
@@ -20,6 +26,7 @@ export interface LayoutDoc {
   created_at?: string;
   modified_at?: string;
   magic?: LayoutMagicRule[];
+  combos?: LayoutCombo[];
 }
 
 export function layoutLikeCount(layout: LayoutDoc): number {

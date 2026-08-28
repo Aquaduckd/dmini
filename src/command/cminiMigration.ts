@@ -42,6 +42,8 @@ const CMINI_COMMAND_MAP: Record<string, MigrationRule> = {
   add: "add",
   remove: "remove",
   rename: "rename",
+  link: "setlink",
+  unlink: "clearlink",
   swap: "swap",
   cycle: "swap",
   "swap!": "swap",

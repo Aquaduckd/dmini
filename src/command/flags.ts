@@ -4,6 +4,7 @@ export interface CommandFlags {
   append?: boolean;
   asc?: boolean;
   board?: string;
+  clear?: boolean;
   corpus?: string;
   desc?: boolean;
   layoutFilter?: "magic" | "thumb" | "regular";
@@ -22,6 +23,7 @@ export interface ParseFlagsOptions {
   append?: boolean;
   asc?: boolean;
   board?: boolean;
+  clear?: boolean;
   corpus?: boolean;
   desc?: boolean;
   layoutFilter?: boolean;
@@ -65,6 +67,11 @@ export function parseCommandArgs(
         throw new FlagParseError("Use only one of --asc or --desc.");
       }
       flags.desc = true;
+      continue;
+    }
+
+    if (options.clear && part === "--clear") {
+      flags.clear = true;
       continue;
     }
 

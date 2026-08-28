@@ -161,13 +161,14 @@ function rankByOverall(
 
 function layoutMetadataMap(
   entries: LayoutCacheEntry[],
-): Map<string, { hasMagic: boolean; hasThumbs: boolean }> {
-  const metadata = new Map<string, { hasMagic: boolean; hasThumbs: boolean }>();
+): Map<string, { hasMagic: boolean; hasThumbs: boolean; hasCombos: boolean }> {
+  const metadata = new Map<string, { hasMagic: boolean; hasThumbs: boolean; hasCombos: boolean }>();
 
   for (const entry of entries) {
     metadata.set(entry.layout.trim().toLowerCase(), {
       hasMagic: entry.has_magic ?? false,
       hasThumbs: entry.has_thumbs ?? false,
+      hasCombos: entry.has_combos ?? false,
     });
   }
 

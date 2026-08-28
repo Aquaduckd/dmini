@@ -9,6 +9,7 @@ import {
 } from "../mana2/awards.js";
 import { layoutHasMagicRules, layoutHasThumbKeys } from "../mana2/convert.js";
 import { loadCorpusMonograms } from "../mana2/monograms.js";
+import { layoutHasComboRules } from "./combos.js";
 import { formatMagicRuleCount } from "./magic.js";
 import {
   formatLayoutCreatedAt,
@@ -20,6 +21,7 @@ import {
 } from "./types.js";
 import { buildHeatContext } from "../render/heatmap.js";
 import { renderKeyboardPng } from "../render/keyboard.js";
+import { applyLayoutEmbedUrl } from "./link.js";
 
 export async function presentLayout(
   message: Message,
@@ -53,6 +55,7 @@ export async function presentLayout(
     likesAwards,
     hasMagic: layoutHasMagicRules(layout),
     hasThumbs: layoutHasThumbKeys(layout),
+    hasCombos: layoutHasComboRules(layout),
   });
   const title = awardBadges ? `${layout.name} ${awardBadges}` : layout.name;
 
@@ -85,6 +88,7 @@ export async function presentLayout(
     footerParts.push(`Heatmap · ${corpus} corpus`);
   }
   embed.setFooter({ text: footerParts.join(" · ") });
+  applyLayoutEmbedUrl(embed, layout.link);
 
   await replyEmbed(message, embed, { files: [attachment] });
 }

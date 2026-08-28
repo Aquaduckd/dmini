@@ -52,11 +52,14 @@ export interface LayoutListAwardContext {
 }
 
 function awardBadgesForLayout(
-  layoutName: string,
+  layout: LayoutSummary,
   awardContext: LayoutListAwardContext,
 ): string {
-  return formatLayoutAwardBadges(layoutName, awardContext.corpusAwards, {
+  return formatLayoutAwardBadges(layout.name, awardContext.corpusAwards, {
     likesAwards: awardContext.likesAwards,
+    hasMagic: layout.has_magic === true,
+    hasThumbs: layout.has_thumbs === true,
+    hasCombos: layout.has_combos === true,
   });
 }
 
@@ -213,7 +216,7 @@ export function formatLayoutListText(
 
   const names = layouts.map((layout) => displayLayoutName(layout.name));
   const awards = layouts.map((layout) =>
-    awardBadgesForLayout(layout.name, awardContext),
+    awardBadgesForLayout(layout, awardContext),
   );
   const nameWidth = Math.max(4, ...names.map((name) => name.length));
   const awardsWidth = Math.max(0, ...awards.map((badge) => badge.length));
