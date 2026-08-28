@@ -1,4 +1,8 @@
-export { PREFIX } from "./constants.js";
+export { PREFIX, DEPRECATED_CMINI_PREFIXES, matchDeprecatedCminiPrefix } from "./constants.js";
+export {
+  buildCminiDeprecationMessage,
+  parseDeprecatedCminiMessage,
+} from "./cminiMigration.js";
 export { commandHelpEmbed, commandListEmbed, replyUsage } from "./format.js";
 export { registerCommands, parseMessage } from "./router.js";
 export {

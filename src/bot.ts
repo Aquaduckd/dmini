@@ -7,13 +7,15 @@ import { config } from "./config.js";
 import { isAdmin } from "./config/admins.js";
 import { isPublicAccessBlocked } from "./config/access.js";
 import {
+  buildCminiDeprecationMessage,
   getCommand,
+  matchDeprecatedCminiPrefix,
   parseMessage,
   PREFIX,
   registerCommands,
   userCanRunCommand,
 } from "./command/index.js";
-import { errorEmbed, replyEmbed } from "./discord/embeds.js";
+import { errorEmbed, infoEmbed, replyEmbed } from "./discord/embeds.js";
 import { handlePaginationInteraction } from "./discord/paginationButtons.js";
 import { replyLoggedError } from "./discord/errors.js";
 
@@ -69,6 +71,14 @@ export async function startBot(): Promise<void> {
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
+
+    if (matchDeprecatedCminiPrefix(message.content)) {
+      await replyEmbed(
+        message,
+        infoEmbed("cmini is deprecated", buildCminiDeprecationMessage(message.content)),
+      );
+      return;
+    }
 
     const parsed = parseMessage(message.content, PREFIX);
     if (!parsed) return;
