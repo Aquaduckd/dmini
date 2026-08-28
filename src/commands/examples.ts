@@ -10,12 +10,13 @@ import {
 } from "../layout/types.js";
 import {
   errorEmbed,
-  fitsInCodeBlock,
   infoEmbed,
   replyEmbed,
-  textCodeBlock,
 } from "../discord/embeds.js";
-import { formatPaginationFooter } from "../discord/pagination.js";
+import {
+  PaginatedContentTooLongError,
+  replyPaginated,
+} from "../discord/paginationButtons.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { Mana2Error } from "../mana2/cli.js";
 import { CorpusError } from "../mana2/corpus.js";
@@ -25,9 +26,7 @@ import {
   DEFAULT_EXAMPLE_LIMIT,
   EXAMPLE_STATS,
   fetchStatExamples,
-  formatExamplesText,
   MAX_EXAMPLE_LIMIT,
-  paginateExamples,
   resolveStatId,
 } from "../mana2/examples.js";
 
@@ -152,20 +151,22 @@ export const examplesCommand: Command = {
         return;
       }
 
-      let pagination = paginateExamples(layout.name, stat, examples, limit, page);
-      let text = formatExamplesText(pagination, corpus);
-
-      if (!fitsInCodeBlock(text)) {
-        pagination = paginateExamples(
-          layout.name,
-          stat,
-          examples,
-          Math.min(limit, 20),
-          page,
-        );
-        text = formatExamplesText(pagination, corpus);
-
-        if (!fitsInCodeBlock(text)) {
+      try {
+        await replyPaginated(message, {
+          title: `${stat} · ${layout.name}`,
+          userId: message.author.id,
+          initialPage: page,
+          kind: "examples",
+          state: {
+            layoutName: layout.name,
+            stat,
+            corpus,
+            examples,
+            limit,
+          },
+        });
+      } catch (error) {
+        if (error instanceof PaginatedContentTooLongError) {
           await replyEmbed(
             message,
             errorEmbed(
@@ -174,14 +175,8 @@ export const examplesCommand: Command = {
           );
           return;
         }
+        throw error;
       }
-
-      await replyEmbed(
-        message,
-        infoEmbed(`${stat} · ${layout.name}`, textCodeBlock(text)).setFooter({
-          text: formatPaginationFooter(pagination),
-        }),
-      );
     } catch (error) {
       if (error instanceof LayoutNotFoundError) {
         await replyEmbed(message, errorEmbed(error.formatMessage()));

@@ -1,41 +1,24 @@
 import { resolveAuthorUserId } from "../api/authors.js";
-import { LayoutApiError, listLayouts, type LayoutSummary } from "../api/layouts.js";
+import { LayoutApiError, listLayouts } from "../api/layouts.js";
 import { PREFIX } from "../command/constants.js";
 import { FlagParseError, parseCommandArgs } from "../command/flags.js";
 import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import {
   errorEmbed,
-  fitsInCodeBlock,
   infoEmbed,
   replyEmbed,
-  textCodeBlock,
 } from "../discord/embeds.js";
-import { formatPaginationFooter } from "../discord/pagination.js";
+import {
+  PaginatedContentTooLongError,
+  replyPaginated,
+} from "../discord/paginationButtons.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
   clampLimit,
   clampPage,
   DEFAULT_LAYOUT_LIST_LIMIT,
-  displayLayoutName,
-  paginateLayouts,
-  ROW_INDENT,
 } from "./layouts.js";
-
-function formatLikesListText(
-  scopeLabel: string,
-  layouts: LayoutSummary[],
-): string {
-  if (layouts.length === 0) {
-    return [scopeLabel, `${ROW_INDENT}(no layouts)`].join("\n");
-  }
-
-  const body = layouts
-    .map((layout) => `${ROW_INDENT}${displayLayoutName(layout.name)}`)
-    .join("\n");
-
-  return [scopeLabel, body].join("\n");
-}
 
 export const likesCommand: Command = {
   name: "likes",
@@ -108,33 +91,36 @@ export const likesCommand: Command = {
         return;
       }
 
-      const pageCount = Math.max(1, Math.ceil(total / limit));
-      const safePage = Math.min(page, pageCount);
-      const { layouts: pageLayouts } = await listLayouts({
-        likedBy: userId,
-        limit,
-        offset: (safePage - 1) * limit,
-      });
+      const allLayouts = (
+        await listLayouts({
+          likedBy: userId,
+          limit: total,
+        })
+      ).layouts;
 
-      let text = formatLikesListText(scopeLabel, pageLayouts);
-      let footerLimit = limit;
-      let footerPageCount = pageCount;
+      const pageCount = Math.max(1, Math.ceil(allLayouts.length / limit));
+      if (page > pageCount) {
+        await replyEmbed(
+          message,
+          errorEmbed(`Page ${page} is out of range (max ${pageCount}).`),
+        );
+        return;
+      }
 
-      if (!fitsInCodeBlock(text)) {
-        const reducedLimit = Math.min(limit, 15);
-        const allLayouts = (
-          await listLayouts({
-            likedBy: userId,
-            limit: total,
-          })
-        ).layouts;
-        const reduced = paginateLayouts(allLayouts, reducedLimit, safePage);
-
-        text = formatLikesListText(scopeLabel, reduced.items);
-        footerLimit = reducedLimit;
-        footerPageCount = reduced.pageCount;
-
-        if (!fitsInCodeBlock(text)) {
+      try {
+        await replyPaginated(message, {
+          title,
+          userId: message.author.id,
+          initialPage: page,
+          kind: "likes",
+          state: {
+            scopeLabel,
+            allLayouts,
+            limit,
+          },
+        });
+      } catch (error) {
+        if (error instanceof PaginatedContentTooLongError) {
           await replyEmbed(
             message,
             errorEmbed(
@@ -143,19 +129,8 @@ export const likesCommand: Command = {
           );
           return;
         }
+        throw error;
       }
-
-      await replyEmbed(
-        message,
-        infoEmbed(title, textCodeBlock(text)).setFooter({
-          text: formatPaginationFooter({
-            page: safePage,
-            pageCount: footerPageCount,
-            limit: footerLimit,
-            total,
-          }),
-        }),
-      );
     } catch (error) {
       if (error instanceof LayoutApiError) {
         await replyLoggedError(

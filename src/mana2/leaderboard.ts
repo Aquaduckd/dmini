@@ -189,6 +189,122 @@ function matchesAwardsFilter(
   return matchesFilter(layoutMeta, filter);
 }
 
+export interface LeaderboardSnapshot {
+  corpus: string;
+  filter: LayoutLeaderboardFilter;
+  mode: "stat" | "overall" | "awards";
+  stat?: StatDefinition;
+  layoutCount: number;
+  overallStatCount?: number;
+  entries: LeaderboardEntry[];
+  awardData?: LeaderboardAwardData;
+}
+
+export async function buildAwardsLeaderboardSnapshot(options: {
+  corpus: string;
+  filter: LayoutLeaderboardFilter;
+}): Promise<LeaderboardSnapshot | null> {
+  const cacheEntries = await listCurrentVersionCacheEntries();
+  const metadata = layoutMetadataMap(cacheEntries);
+  const { corpus, entries } = await buildAwardsLeaderboardEntries({
+    corpus: options.corpus,
+    layoutMetadata: metadata,
+  });
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  const filtered = entries.filter((entry) =>
+    matchesAwardsFilter(entry.name, options.filter, metadata),
+  );
+
+  return {
+    corpus,
+    filter: options.filter,
+    mode: "awards",
+    layoutCount: filtered.length,
+    entries: filtered.map((entry) => ({
+      name: entry.name,
+      value: entry.count,
+      badges: entry.badges,
+    })),
+  };
+}
+
+export async function buildLeaderboardSnapshot(options: {
+  corpus: string;
+  filter: LayoutLeaderboardFilter;
+  statId?: string;
+}): Promise<LeaderboardSnapshot | null> {
+  const index = await buildFilteredCorpusIndex(options.corpus, options.filter);
+  if (!index) return null;
+
+  const layoutCount = Object.keys(index.layouts).length;
+
+  if (options.statId) {
+    const stat = getStatDefinition(options.statId);
+    if (!stat) {
+      throw new Error(`Unknown stat \`${options.statId}\`.`);
+    }
+
+    const entries = rankLayouts(index, options.statId, {
+      ascending: isLowerIsBetter(options.statId),
+    }).map((entry) => ({
+      name: entry.name,
+      value: entry.value,
+    }));
+    const awardData =
+      options.filter === "all" && isAwardStatId(options.statId)
+        ? {
+            board: options.statId,
+            crownLayout: entries[0]?.name,
+            tierLayouts: entries
+              .slice(0, TOP_AWARD_COUNT)
+              .map((entry) => entry.name),
+          }
+        : undefined;
+
+    return {
+      corpus: index.corpus,
+      filter: options.filter,
+      mode: "stat",
+      stat,
+      layoutCount,
+      entries,
+      awardData,
+    };
+  }
+
+  const cutoffTable = await requireResolvedCorpusPercentileCutoffs(
+    options.corpus,
+  );
+  const allRanked = rankByOverall(index, cutoffTable.stats, {
+    limit: Number.MAX_SAFE_INTEGER,
+    offset: 0,
+  });
+  const awardData =
+    options.filter === "all"
+      ? {
+          board: "overall" as const,
+          crownLayout: allRanked.entries[0]?.name,
+          tierLayouts: allRanked.entries
+            .slice(0, TOP_AWARD_COUNT)
+            .map((entry) => entry.name),
+        }
+      : undefined;
+
+  return {
+    corpus: index.corpus,
+    filter: options.filter,
+    mode: "overall",
+    layoutCount,
+    overallStatCount: allRanked.statCount,
+    entries: allRanked.entries,
+    awardData,
+  };
+}
+
 export async function buildAwardsLeaderboard(options: {
   corpus: string;
   filter: LayoutLeaderboardFilter;

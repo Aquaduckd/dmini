@@ -9,6 +9,8 @@ export interface Command {
   name: string;
   description: string;
   usage: string;
+  /** Multi-line usage for help embeds. Falls back to `usage` when omitted. */
+  usageLines?: string[];
   notes?: string;
   aliases?: string[];
   examples?: string[];

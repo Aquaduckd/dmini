@@ -14,6 +14,7 @@ import {
   userCanRunCommand,
 } from "./command/index.js";
 import { errorEmbed, replyEmbed } from "./discord/embeds.js";
+import { handlePaginationInteraction } from "./discord/paginationButtons.js";
 import { replyLoggedError } from "./discord/errors.js";
 
 const globalState = globalThis as typeof globalThis & {
@@ -46,6 +47,24 @@ export async function startBot(): Promise<void> {
 
   client.once(Events.ClientReady, (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
+  });
+
+  client.on(Events.InteractionCreate, async (interaction) => {
+    try {
+      const handled = await handlePaginationInteraction(interaction);
+      if (handled) return;
+    } catch (error) {
+      if (interaction.isRepliable()) {
+        const content = "Something went wrong updating this page.";
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({ content, embeds: [], components: [] });
+        } else {
+          await interaction.reply({ content, ephemeral: true });
+        }
+      }
+
+      console.error("Pagination interaction error:", error);
+    }
   });
 
   client.on(Events.MessageCreate, async (message) => {

@@ -7,6 +7,7 @@ export interface CommandFlags {
   corpus?: string;
   desc?: boolean;
   layoutFilter?: "magic" | "thumb" | "regular";
+  likes?: boolean;
   limit?: number;
   page?: number;
   renderMode?: RenderMode;
@@ -21,6 +22,7 @@ export interface ParseFlagsOptions {
   corpus?: boolean;
   desc?: boolean;
   layoutFilter?: boolean;
+  likes?: boolean;
   limit?: boolean;
   page?: boolean;
   renderMode?: boolean;
@@ -99,6 +101,11 @@ export function parseCommandArgs(
         throw new FlagParseError("Use only one of --magic, --thumb, or --regular.");
       }
       flags.layoutFilter = "regular";
+      continue;
+    }
+
+    if (options.likes && part === "--likes") {
+      flags.likes = true;
       continue;
     }
 

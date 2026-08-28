@@ -4,8 +4,8 @@ import { PREFIX } from "./constants.js";
 import type { Command, CommandContext } from "./types.js";
 
 const HELP_GROUPS: { label: string; names: string[] }[] = [
-  { label: "General", names: ["help", "about"] },
-  { label: "Layouts", names: ["layout", "layouts", "random", "magic"] },
+  { label: "General", names: ["help", "about", "suggest"] },
+  { label: "Layouts", names: ["layout", "inspect", "layouts", "random", "magic"] },
   { label: "Editing", names: ["add", "addmagic", "copy", "remove", "rename", "setboard", "clearmagic", "swap"] },
   { label: "Social", names: ["like", "likes", "unlike", "gift"] },
   { label: "Analysis", names: ["analyze", "find", "freq", "freqs", "column", "leaderboard", "percentiles", "examples"] },
@@ -82,9 +82,13 @@ export function commandListEmbed(commands: Command[]): EmbedBuilder {
 }
 
 export function commandHelpEmbed(command: Command): EmbedBuilder {
+  const usageValue = command.usageLines?.length
+    ? command.usageLines.map((line) => `\`${line}\``).join("\n")
+    : `\`${command.usage}\``;
+
   const embed = infoEmbed(command.name, command.description).addFields({
     name: "Usage",
-    value: `\`${command.usage}\``,
+    value: usageValue,
     inline: false,
   });
 

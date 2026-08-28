@@ -19,11 +19,15 @@ function assertNumericId(value: string | number, label: string): string {
 }
 
 export function parseJsonPreservingLargeInts<T>(raw: string): T {
-  return JSON.parse(preserveJsonSnowflakes(raw)) as T;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return JSON.parse(preserveJsonSnowflakes(raw)) as T;
+  }
 }
 
 export function parseAuthorsJson(raw: string): Record<string, string> {
-  return JSON.parse(preserveJsonSnowflakes(raw)) as Record<string, string>;
+  return JSON.parse(raw) as Record<string, string>;
 }
 
 export function stringifyLayoutCreate(
@@ -39,7 +43,7 @@ export function stringifyLayoutCreate(
   const parts = [
     `"name":${JSON.stringify(layout.name)}`,
     `"board":${JSON.stringify(layout.board)}`,
-    `"user":${user}`,
+    `"user":${JSON.stringify(user)}`,
     `"keys":${JSON.stringify(layout.keys)}`,
   ];
 
@@ -61,13 +65,13 @@ export function stringifyLayoutDoc(layout: LayoutDoc): string {
     parts.splice(
       2,
       0,
-      `"user":${assertNumericId(layout.user, "User")}`,
+      `"user":${JSON.stringify(assertNumericId(layout.user, "User"))}`,
     );
   }
 
   if (layout.likes !== undefined) {
     parts.push(
-      `"likes":[${layout.likes.map((id) => assertNumericId(id, "Like")).join(",")}]`,
+      `"likes":[${layout.likes.map((id) => JSON.stringify(assertNumericId(id, "Like"))).join(",")}]`,
     );
   }
 

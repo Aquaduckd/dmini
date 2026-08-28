@@ -6,20 +6,21 @@ import { resolveCorpus } from "../config/user.js";
 import { isAdmin } from "../config/admins.js";
 import {
   errorEmbed,
-  fitsInCodeBlock,
   infoEmbed,
   replyEmbed,
-  textCodeBlock,
 } from "../discord/embeds.js";
-import { formatPaginationFooter } from "../discord/pagination.js";
+import {
+  PaginatedContentTooLongError,
+  replyPaginated,
+} from "../discord/paginationButtons.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import {
   refreshBoardAwards,
 } from "../mana2/awards.js";
 import {
-  buildLeaderboard,
-  buildAwardsLeaderboard,
+  buildAwardsLeaderboardSnapshot,
+  buildLeaderboardSnapshot,
   formatLeaderboardValue,
   leaderboardFilterLabel,
   type LeaderboardResult,
@@ -37,7 +38,7 @@ import {
 const VALUE_GAP = "  ";
 const BADGES_COLUMN_GAP = "  ";
 
-function formatLeaderboardText(
+export function formatLeaderboardText(
   result: LeaderboardResult,
   page: number,
   limit: number,
@@ -177,24 +178,20 @@ export const leaderboardCommand: Command = {
 
     try {
       const userIsAdmin = await isAdmin(message.author.id);
-      const offset = (page - 1) * limit;
-      const result = awardsMode
-        ? await buildAwardsLeaderboard({
+      const filter = layoutFilter ?? "all";
+      const snapshot = awardsMode
+        ? await buildAwardsLeaderboardSnapshot({
             corpus,
-            filter: layoutFilter ?? "all",
-            limit,
-            offset,
+            filter,
           })
-        : await buildLeaderboard({
+        : await buildLeaderboardSnapshot({
             corpus,
-            filter: layoutFilter ?? "all",
+            filter,
             statId,
-            limit,
-            offset,
           });
 
-      if (!result) {
-        const filterLabel = leaderboardFilterLabel(layoutFilter ?? "all");
+      if (!snapshot || snapshot.entries.length === 0) {
+        const filterLabel = leaderboardFilterLabel(filter);
         const filterSuffix = layoutFilter ? ` (${filterLabel})` : "";
         const cacheMessage = awardsMode
           ? `No awards found for corpus \`${corpus}\`${filterSuffix}. View stat leaderboards or \`${PREFIX}layouts --sort likes\` first to populate awards.`
@@ -205,7 +202,7 @@ export const leaderboardCommand: Command = {
         return;
       }
 
-      const pageCount = Math.max(1, Math.ceil(result.totalEntries / limit));
+      const pageCount = Math.max(1, Math.ceil(snapshot.entries.length / limit));
       if (page > pageCount) {
         await replyEmbed(
           message,
@@ -214,28 +211,48 @@ export const leaderboardCommand: Command = {
         return;
       }
 
-      if (!awardsMode && result.awardData) {
+      if (snapshot.awardData) {
         await refreshBoardAwards(
-          result.corpus,
-          result.awardData.board,
-          result.awardData.tierLayouts,
-          result.awardData.crownLayout,
+          snapshot.corpus,
+          snapshot.awardData.board,
+          snapshot.awardData.tierLayouts,
+          snapshot.awardData.crownLayout,
         );
       }
 
-      const text = formatLeaderboardText(result, page, limit);
+      try {
+        await replyPaginated(message, {
+          title: "Leaderboard",
+          userId: message.author.id,
+          initialPage: page,
+          kind: "leaderboard",
+          state: {
+            corpus: snapshot.corpus,
+            filter: snapshot.filter,
+            mode: snapshot.mode,
+            statId: snapshot.stat?.id,
+            layoutCount: snapshot.layoutCount,
+            overallStatCount: snapshot.overallStatCount,
+            limit,
+            entries: snapshot.entries,
+          },
+        });
+      } catch (error) {
+        if (error instanceof PaginatedContentTooLongError) {
+          await replyEmbed(
+            message,
+            errorEmbed(
+              "Leaderboard output is too long for Discord. Try a smaller limit.",
+            ),
+          );
+          return;
+        }
 
-      const embed = infoEmbed("Leaderboard", fitsInCodeBlock(text) ? textCodeBlock(text) : text);
-      embed.setFooter({
-        text: formatPaginationFooter({
-          page,
-          pageCount,
-          limit,
-          total: result.totalEntries,
-        }),
-      });
-
-      await replyEmbed(message, embed);
+        await replyEmbed(
+          message,
+          errorEmbed("Failed to load this leaderboard page."),
+        );
+      }
     } catch (error) {
       if (error instanceof PercentileCutoffsMissingError) {
         const userIsAdmin = await isAdmin(message.author.id);

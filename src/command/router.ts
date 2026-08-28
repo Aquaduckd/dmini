@@ -10,6 +10,7 @@ import { examplesCommand } from "../commands/examples.js";
 import { findCommand } from "../commands/find.js";
 import { freqCommand, freqsCommand, columnCommand } from "../commands/freq.js";
 import { giftCommand } from "../commands/gift.js";
+import { inspectCommand } from "../commands/inspect.js";
 import { helpCommand } from "../commands/help.js";
 import { layoutsCommand } from "../commands/layouts.js";
 import { layoutCommand } from "../commands/layout.js";
@@ -22,6 +23,7 @@ import { percentilesCommand } from "../commands/percentiles.js";
 import { removeCommand } from "../commands/remove.js";
 import { renameCommand } from "../commands/rename.js";
 import { setboardCommand } from "../commands/setboard.js";
+import { suggestCommand } from "../commands/suggest.js";
 import { swapCommand } from "../commands/swap.js";
 import { clearCommands, registerCommand } from "./registry.js";
 
@@ -38,6 +40,7 @@ export function registerCommands(): void {
   registerCommand(clearmagicCommand);
   registerCommand(swapCommand);
   registerCommand(layoutCommand);
+  registerCommand(inspectCommand);
   registerCommand(randomCommand);
   registerCommand(likeCommand);
   registerCommand(likesCommand);
@@ -53,6 +56,7 @@ export function registerCommands(): void {
   registerCommand(percentilesCommand);
   registerCommand(leaderboardCommand);
   registerCommand(examplesCommand);
+  registerCommand(suggestCommand);
   registerCommand(configCommand);
   registerCommand(debugCommand);
 }

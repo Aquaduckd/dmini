@@ -3,7 +3,6 @@ import { layoutMatchesSearch } from "../api/layoutSuggest.js";
 import {
   LayoutApiError,
   listAllLayouts,
-  listLayouts,
   type LayoutSummary,
 } from "../api/layouts.js";
 import { PREFIX } from "../command/constants.js";
@@ -12,20 +11,19 @@ import { replyUsage } from "../command/format.js";
 import type { Command } from "../command/types.js";
 import {
   errorEmbed,
-  fitsInCodeBlock,
   infoEmbed,
   replyEmbed,
-  textCodeBlock,
 } from "../discord/embeds.js";
-import { formatPaginationFooter } from "../discord/pagination.js";
+import {
+  PaginatedContentTooLongError,
+  replyPaginated,
+} from "../discord/paginationButtons.js";
 import { replyLoggedError } from "../discord/errors.js";
 import { CorpusError } from "../mana2/corpus.js";
 import { resolveCorpus } from "../config/user.js";
 import {
   buildLikesAwardData,
   formatLayoutAwardBadges,
-  loadCorpusAwards,
-  loadLikesAwards,
   refreshLikesAwards,
   type CorpusAwards,
   type LikesAwards,
@@ -48,7 +46,7 @@ const NAME_COLUMN_GAP = "  ";
 const AWARDS_COLUMN_GAP = "  ";
 const MAX_LAYOUT_NAME_LENGTH = 32;
 
-interface LayoutListAwardContext {
+export interface LayoutListAwardContext {
   corpusAwards: CorpusAwards | null;
   likesAwards: LikesAwards | null;
 }
@@ -194,7 +192,7 @@ export function paginateLayouts(
   };
 }
 
-function formatLayoutListText(
+export function formatLayoutListText(
   scopeLabel: string,
   layouts: LayoutSummary[],
   sort: LayoutSort,
@@ -249,12 +247,6 @@ function formatLayoutListText(
     .join("\n");
 
   return [header, body].join("\n");
-}
-
-function listQuery(scope: LayoutListScope, limit: number, offset: number) {
-  return scope.userId
-    ? listLayouts({ user: scope.userId, limit, offset })
-    : listLayouts({ limit, offset });
 }
 
 export const layoutsCommand: Command = {
@@ -362,25 +354,14 @@ export const layoutsCommand: Command = {
         };
       }
 
-      const useClientList =
-        sort !== "name" ||
-        Boolean(searchQuery) ||
-        sortDirection !== defaultSortDirection(sort);
-      let layouts: LayoutSummary[];
-      let total: number;
-
-      if (useClientList) {
-        layouts = await listAllLayouts(scope.userId ? { user: scope.userId } : {});
-        if (searchQuery) {
-          layouts = filterLayoutsBySearch(layouts, searchQuery);
-        }
-        layouts = sortLayouts(layouts, sort, sortDirection);
-        total = layouts.length;
-      } else {
-        const response = await listQuery(scope, limit, (page - 1) * limit);
-        total = response.total;
-        layouts = response.layouts;
+      let layouts = await listAllLayouts(
+        scope.userId ? { user: scope.userId } : {},
+      );
+      if (searchQuery) {
+        layouts = filterLayoutsBySearch(layouts, searchQuery);
       }
+      layouts = sortLayouts(layouts, sort, sortDirection);
+      const total = layouts.length;
 
       if (total === 0) {
         const emptyMessage = searchQuery
@@ -395,22 +376,13 @@ export const layoutsCommand: Command = {
         return;
       }
 
-      let pageCount = Math.max(1, Math.ceil(total / limit));
-      let safePage = Math.min(page, pageCount);
-      let pageLayouts = layouts;
-
-      if (useClientList) {
-        ({ items: pageLayouts, pageCount, safePage } = paginateLayouts(
-          layouts,
-          limit,
-          page,
-        ));
-      } else if (safePage !== page) {
-        ({ layouts: pageLayouts } = await listQuery(
-          scope,
-          limit,
-          (safePage - 1) * limit,
-        ));
+      const pageCount = Math.max(1, Math.ceil(total / limit));
+      if (page > pageCount) {
+        await replyEmbed(
+          message,
+          errorEmbed(`Page ${page} is out of range (max ${pageCount}).`),
+        );
+        return;
       }
 
       const shouldRefreshLikesAwards =
@@ -424,47 +396,23 @@ export const layoutsCommand: Command = {
         );
       }
 
-      const [corpusAwards, likesAwards] = await Promise.all([
-        loadCorpusAwards(corpus),
-        loadLikesAwards(),
-      ]);
-      const awardContext: LayoutListAwardContext = {
-        corpusAwards,
-        likesAwards,
-      };
-
-      let text = formatLayoutListText(
-        scope.label,
-        pageLayouts,
-        sort,
-        sortDirection,
-        awardContext,
-      );
-      let footerLimit = limit;
-      let footerPageCount = pageCount;
-
-      if (!fitsInCodeBlock(text)) {
-        const reducedLimit = Math.min(limit, 15);
-        const reduced = useClientList
-          ? paginateLayouts(layouts, reducedLimit, safePage)
-          : {
-              items: (
-                await listQuery(scope, reducedLimit, (safePage - 1) * reducedLimit)
-              ).layouts,
-              pageCount: Math.max(1, Math.ceil(total / reducedLimit)),
-            };
-
-        text = formatLayoutListText(
-          scope.label,
-          reduced.items,
-          sort,
-          sortDirection,
-          awardContext,
-        );
-        footerLimit = reducedLimit;
-        footerPageCount = reduced.pageCount;
-
-        if (!fitsInCodeBlock(text)) {
+      try {
+        await replyPaginated(message, {
+          title: `Layouts · ${scope.title}`,
+          userId: message.author.id,
+          initialPage: page,
+          kind: "layouts",
+          state: {
+            scope,
+            sort,
+            sortDirection,
+            allLayouts: layouts,
+            limit,
+            corpus,
+          },
+        });
+      } catch (error) {
+        if (error instanceof PaginatedContentTooLongError) {
           await replyEmbed(
             message,
             errorEmbed(
@@ -473,19 +421,8 @@ export const layoutsCommand: Command = {
           );
           return;
         }
+        throw error;
       }
-
-      await replyEmbed(
-        message,
-        infoEmbed(`Layouts · ${scope.title}`, textCodeBlock(text)).setFooter({
-          text: formatPaginationFooter({
-            page: safePage,
-            pageCount: footerPageCount,
-            limit: footerLimit,
-            total,
-          }),
-        }),
-      );
     } catch (error) {
       if (error instanceof LayoutApiError) {
         await replyLoggedError(
