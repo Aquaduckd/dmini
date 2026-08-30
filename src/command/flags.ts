@@ -38,6 +38,19 @@ export interface ParseFlagsOptions {
   sort?: boolean;
 }
 
+const MOBILE_FLAG_PREFIX = /^[—–]/;
+
+function normalizeFlagToken(part: string): string {
+  if (MOBILE_FLAG_PREFIX.test(part)) {
+    return `--${part.slice(1)}`;
+  }
+  return part;
+}
+
+function looksLikeFlag(token: string): boolean {
+  return /^[-—–]/.test(token);
+}
+
 export function parseCommandArgs(
   args: string,
   options: ParseFlagsOptions = {},
@@ -47,7 +60,7 @@ export function parseCommandArgs(
   const flags: CommandFlags = {};
 
   for (let index = 0; index < parts.length; index++) {
-    const part = parts[index]!;
+    const part = normalizeFlagToken(parts[index]!);
 
     if (options.append && part === "--append") {
       flags.append = true;
@@ -77,7 +90,7 @@ export function parseCommandArgs(
 
     if (options.board && part === "--board") {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --board");
       }
       flags.board = value;
@@ -86,7 +99,7 @@ export function parseCommandArgs(
 
     if (options.corpus && (part === "--corpus" || part === "-c")) {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --corpus");
       }
       flags.corpus = value;
@@ -129,7 +142,7 @@ export function parseCommandArgs(
 
     if (options.max && part === "--max") {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --max");
       }
       flags.max = parseNumericFlag(value, "--max");
@@ -138,7 +151,7 @@ export function parseCommandArgs(
 
     if (options.min && part === "--min") {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --min");
       }
       flags.min = parseNumericFlag(value, "--min");
@@ -147,7 +160,7 @@ export function parseCommandArgs(
 
     if (options.limit && (part === "--limit" || part === "-l")) {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --limit");
       }
       const parsed = Number(value);
@@ -160,7 +173,7 @@ export function parseCommandArgs(
 
     if (options.page && (part === "--page" || part === "-p")) {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --page");
       }
       const parsed = Number(value);
@@ -173,7 +186,7 @@ export function parseCommandArgs(
 
     if (options.sort && (part === "--sort" || part === "-s")) {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --sort");
       }
       flags.sort = value;
@@ -182,7 +195,7 @@ export function parseCommandArgs(
 
     if (options.search && (part === "--search" || part === "-q")) {
       const value = parts[++index];
-      if (!value || value.startsWith("-")) {
+      if (!value || looksLikeFlag(value)) {
         throw new FlagParseError("Missing value for --search");
       }
       flags.search = value;
@@ -205,7 +218,7 @@ export function parseCommandArgs(
       continue;
     }
 
-    if (part.startsWith("-")) {
+    if (looksLikeFlag(part)) {
       throw new FlagParseError(`Unknown flag: ${part}`);
     }
 

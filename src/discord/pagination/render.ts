@@ -236,6 +236,7 @@ async function renderLeaderboardPage(
     },
     safePage,
     state.limit,
+    state.sortDirection,
   );
 
   return {

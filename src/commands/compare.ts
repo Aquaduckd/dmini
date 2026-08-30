@@ -127,7 +127,6 @@ export const compareCommand: Command = {
         filename,
         corpus,
         author,
-        newLayout.link,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });

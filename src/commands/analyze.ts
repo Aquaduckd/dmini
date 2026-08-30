@@ -123,7 +123,6 @@ export const analyzeCommand: Command = {
         corpus,
         author,
         percentileTable?.stats,
-        layout.link,
       );
 
       await replyEmbed(message, embed, { files: [attachment] });

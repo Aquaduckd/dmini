@@ -53,6 +53,7 @@ export interface LeaderboardPaginationState {
   statId?: string;
   layoutCount: number;
   overallStatCount?: number;
+  sortDirection: LayoutSortDirection;
   limit: number;
   entries: LeaderboardEntry[];
 }

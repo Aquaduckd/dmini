@@ -27,11 +27,13 @@ import {
 } from "../mana2/leaderboard.js";
 import { PercentileCutoffsMissingError } from "../mana2/percentiles.js";
 import { resolveStatId } from "../mana2/stats.js";
+import type { LayoutSortDirection } from "./layouts.js";
 import {
   clampLimit,
   clampPage,
   DEFAULT_LAYOUT_LIST_LIMIT,
   displayLayoutName,
+  parseSortDirection,
   ROW_INDENT,
 } from "./layouts.js";
 
@@ -42,16 +44,18 @@ export function formatLeaderboardText(
   result: LeaderboardResult,
   page: number,
   limit: number,
+  direction: LayoutSortDirection = "desc",
 ): string {
   const filterLabel = leaderboardFilterLabel(result.filter);
   const filterPart = result.filter === "all" ? "" : ` · ${filterLabel}`;
+  const directionPart = direction === "desc" ? "" : ` · ${direction}`;
 
   const header =
     result.mode === "overall"
-      ? `Top layouts overall (${result.corpus})${filterPart}`
+      ? `Top layouts overall (${result.corpus})${filterPart}${directionPart}`
       : result.mode === "awards"
-        ? `Top layouts by awards (${result.corpus})${filterPart}`
-        : `Top layouts by ${result.stat!.label} (${result.corpus})${filterPart}`;
+        ? `Top layouts by awards (${result.corpus})${filterPart}${directionPart}`
+        : `Top layouts by ${result.stat!.label} (${result.corpus})${filterPart}${directionPart}`;
 
   const meta =
     result.mode === "overall"
@@ -107,13 +111,14 @@ export const leaderboardCommand: Command = {
   name: "leaderboard",
   aliases: ["lb", "top"],
   description: "Rank layouts by a stat, overall average percentile, or award count",
-  usage: `${PREFIX}leaderboard [stat|awards] [--magic|--thumb|--regular] [--corpus NAME] [--limit N] [--page N]`,
+  usage: `${PREFIX}leaderboard [stat|awards] [--magic|--thumb|--regular] [--corpus NAME] [--asc|--desc] [--limit N] [--page N]`,
   notes:
     "Omit the stat for overall ranking (average percentile across bigram and trigram stats). Use `awards` to rank layouts by total badge count. Requires a warmed analysis cache and percentile cutoffs built by a server admin.",
   examples: [
     `${PREFIX}leaderboard sfb`,
     `${PREFIX}leaderboard awards`,
     `${PREFIX}leaderboard roll --thumb`,
+    `${PREFIX}leaderboard sfb --asc`,
     `${PREFIX}leaderboard --magic --limit 10`,
     `${PREFIX}leaderboard --regular`,
     `${PREFIX}leaderboard alt --corpus reddit --page 2`,
@@ -124,10 +129,13 @@ export const leaderboardCommand: Command = {
     let layoutFilter: "magic" | "thumb" | "regular" | undefined;
     let limit = DEFAULT_LAYOUT_LIST_LIMIT;
     let page = 1;
+    let sortDirection: LayoutSortDirection = "desc";
 
     try {
       const { positional, flags } = parseCommandArgs(args, {
+        asc: true,
         corpus: true,
+        desc: true,
         layoutFilter: true,
         limit: true,
         page: true,
@@ -143,6 +151,7 @@ export const leaderboardCommand: Command = {
       layoutFilter = flags.layoutFilter;
       limit = clampLimit(flags.limit ?? DEFAULT_LAYOUT_LIST_LIMIT);
       page = clampPage(flags.page ?? 1);
+      sortDirection = parseSortDirection(flags.asc, flags.desc, "likes");
     } catch (error) {
       if (error instanceof FlagParseError) {
         await replyEmbed(message, errorEmbed(error.message));
@@ -220,6 +229,11 @@ export const leaderboardCommand: Command = {
         );
       }
 
+      const entries =
+        sortDirection === "asc"
+          ? [...snapshot.entries].reverse()
+          : snapshot.entries;
+
       try {
         await replyPaginated(message, {
           title: "Leaderboard",
@@ -233,8 +247,9 @@ export const leaderboardCommand: Command = {
             statId: snapshot.stat?.id,
             layoutCount: snapshot.layoutCount,
             overallStatCount: snapshot.overallStatCount,
+            sortDirection,
             limit,
-            entries: snapshot.entries,
+            entries,
           },
         });
       } catch (error) {

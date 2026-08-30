@@ -36,6 +36,19 @@ export const ROW_INDENT = "  ";
 export type LayoutSort = "name" | "likes" | "created" | "modified";
 export type LayoutSortDirection = "asc" | "desc";
 
+export function parseSortDirection(
+  asc?: boolean,
+  desc?: boolean,
+  sort: LayoutSort = "name",
+): LayoutSortDirection {
+  if (asc && desc) {
+    throw new FlagParseError("Use only one of --asc or --desc.");
+  }
+  if (asc) return "asc";
+  if (desc) return "desc";
+  return sort === "name" ? "asc" : "desc";
+}
+
 interface LayoutListScope {
   label: string;
   title: string;
@@ -125,17 +138,12 @@ function defaultSortDirection(sort: LayoutSort): LayoutSortDirection {
   return sort === "name" ? "asc" : "desc";
 }
 
-function parseSortDirection(
+function parseLayoutSortDirection(
   asc?: boolean,
   desc?: boolean,
   sort: LayoutSort = "name",
 ): LayoutSortDirection {
-  if (asc && desc) {
-    throw new FlagParseError("Use only one of --asc or --desc.");
-  }
-  if (asc) return "asc";
-  if (desc) return "desc";
-  return defaultSortDirection(sort);
+  return parseSortDirection(asc, desc, sort);
 }
 
 function comparePrimary(
@@ -295,7 +303,7 @@ export const layoutsCommand: Command = {
       if (flags.limit !== undefined) limit = flags.limit;
       if (flags.page !== undefined) page = flags.page;
       sort = parseLayoutSort(flags.sort);
-      sortDirection = parseSortDirection(flags.asc, flags.desc, sort);
+      sortDirection = parseLayoutSortDirection(flags.asc, flags.desc, sort);
     } catch (error) {
       if (error instanceof FlagParseError) {
         await replyEmbed(message, errorEmbed(error.message));
