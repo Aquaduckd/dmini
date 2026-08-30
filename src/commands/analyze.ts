@@ -10,9 +10,7 @@ import { errorEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
 import {
   isStaggeredBoard,
-  layoutNotAnalyzableMessage,
   layoutToRenderKeys,
-  missingAnalysisCharacters,
 } from "../layout/types.js";
 import { analyzeLayout, Mana2Error } from "../mana2/analyze.js";
 import { CorpusError } from "../mana2/corpus.js";
@@ -77,15 +75,6 @@ export const analyzeCommand: Command = {
 
       if (keys.length === 0) {
         await replyEmbed(message, errorEmbed(`Layout \`${name}\` has no keys.`));
-        return;
-      }
-
-      const missing = missingAnalysisCharacters(layout);
-      if (missing.length > 0) {
-        await replyEmbed(
-          message,
-          errorEmbed(layoutNotAnalyzableMessage(layout.name, missing)),
-        );
         return;
       }
 
