@@ -11,6 +11,7 @@ import type { Command } from "../command/types.js";
 import { layoutOwnedByUser } from "../layout/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
+import { deleteLayoutCache } from "../mana2/cache.js";
 
 export const removeCommand: Command = {
   name: "remove",
@@ -36,6 +37,7 @@ export const removeCommand: Command = {
       }
 
       await deleteLayout(layout.name);
+      await deleteLayoutCache(layout.name);
     } catch (error) {
       if (error instanceof LayoutNotFoundError) {
         await replyEmbed(message, errorEmbed(error.formatMessage()));

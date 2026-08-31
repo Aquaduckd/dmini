@@ -17,6 +17,7 @@ import {
 import { layoutOwnedByUser } from "../layout/types.js";
 import { errorEmbed, infoEmbed, replyEmbed } from "../discord/embeds.js";
 import { replyLoggedError } from "../discord/errors.js";
+import { renameLayoutCache } from "../mana2/cache.js";
 
 export const renameCommand: Command = {
   name: "rename",
@@ -63,6 +64,7 @@ export const renameCommand: Command = {
       }
 
       await renameLayout(layout.name, newName);
+      await renameLayoutCache(layout.name, newName);
     } catch (error) {
       if (error instanceof LayoutNotFoundError) {
         await replyEmbed(message, errorEmbed(error.formatMessage()));

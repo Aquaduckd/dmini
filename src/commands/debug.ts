@@ -17,6 +17,7 @@ import {
   clearAnalysisCache,
   getCacheStatus,
   getLayoutCacheVersionCounts,
+  reconcileLayoutCache,
   warmAnalysisCache,
 } from "../mana2/cache.js";
 import {
@@ -293,6 +294,43 @@ async function handleCache(message: Message, args: string): Promise<void> {
     return;
   }
 
+  if (action === "reconcile") {
+    const dryRun = /--dry-run/i.test(actionArgs);
+    try {
+      const result = await reconcileLayoutCache({ dryRun });
+      const lines = [
+        dryRun ? "Dry run — no files deleted." : "Orphan cache entries removed.",
+        `Kept: **${result.kept}**`,
+        `Removed: **${result.removed.length}**`,
+      ];
+
+      if (result.removed.length > 0) {
+        lines.push("");
+        const preview = result.removed.slice(0, 20);
+        lines.push(preview.map((name) => `- \`${name}\``).join("\n"));
+        if (result.removed.length > 20) {
+          lines.push(`- …and ${result.removed.length - 20} more`);
+        }
+      }
+
+      await replyEmbed(
+        message,
+        infoEmbed(
+          dryRun ? "Cache reconcile (dry run)" : "Cache reconciled",
+          lines.join("\n"),
+        ),
+      );
+    } catch (error) {
+      await replyLoggedError(
+        message,
+        "Failed to reconcile analysis cache:",
+        error,
+        "Failed to reconcile analysis cache",
+      );
+    }
+    return;
+  }
+
   if (action === "warm") {
     await replyEmbed(
       message,
@@ -361,6 +399,7 @@ async function handleCache(message: Message, args: string): Promise<void> {
         `\`${PREFIX}debug cache\` — show cache status`,
         `\`${PREFIX}debug cache warm [corpus]\` — compute missing stats`,
         `\`${PREFIX}debug cache clear [layout]\` — clear cache entries`,
+        `\`${PREFIX}debug cache reconcile [--dry-run]\` — remove orphan cache files`,
       ].join("\n"),
     ),
   );
@@ -499,11 +538,12 @@ const subcommands: Record<string, DebugSubcommand> = {
   },
   cache: {
     description: "Inspect or rebuild the on-disk analysis cache",
-    usage: `${PREFIX}debug cache [status|warm [corpus]|clear [layout]]`,
+    usage: `${PREFIX}debug cache [status|warm [corpus]|clear [layout]|reconcile [--dry-run]]`,
     examples: [
       `${PREFIX}debug cache`,
       `${PREFIX}debug cache warm`,
       `${PREFIX}debug cache warm reddit`,
+      `${PREFIX}debug cache reconcile --dry-run`,
     ],
     execute: handleCache,
   },

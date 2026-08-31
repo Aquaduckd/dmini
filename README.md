@@ -31,7 +31,7 @@ The mana2 checkout should live next to this repo (default: `../mana2`). Set `MAN
    |----------|----------|-------------|
    | `DISCORD_TOKEN` | Yes | Discord bot token |
    | `LAYOUTAPI_TOKEN` | For writes | Bearer token for the layout API |
-   | `LAYOUTAPI_URL` | No | API base URL (default: `https://clemenpine.com`) |
+   | `LAYOUTAPI_URL` | No | API base URL (default: `https://clemenpine.com/layoutapi`) |
    | `MANA2_ROOT` | No | Path to mana2 (default: `../mana2`) |
    | `MANA2_CORPUS` | No | Default analysis corpus (default: `monkeyracer`) |
 

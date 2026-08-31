@@ -366,6 +366,88 @@ export async function clearAnalysisCache(
   return { layoutFiles: 0 };
 }
 
+export async function renameLayoutCache(
+  oldName: string,
+  newName: string,
+): Promise<boolean> {
+  const entry = await readLayoutCache(oldName);
+  if (!entry) {
+    return false;
+  }
+
+  entry.layout = newName;
+
+  const oldPath = layoutCachePath(oldName);
+  const newPath = layoutCachePath(newName);
+
+  await writeLayoutCache(entry);
+
+  if (oldPath !== newPath) {
+    await rm(oldPath, { force: true });
+  }
+
+  return true;
+}
+
+export async function deleteLayoutCache(layoutName: string): Promise<boolean> {
+  const cached = await readLayoutCache(layoutName);
+  if (!cached) {
+    return false;
+  }
+
+  await rm(layoutCachePath(layoutName), { force: true });
+  return true;
+}
+
+export interface ReconcileLayoutCacheResult {
+  removed: string[];
+  kept: number;
+  dryRun: boolean;
+}
+
+export async function reconcileLayoutCache(
+  options: { dryRun?: boolean } = {},
+): Promise<ReconcileLayoutCacheResult> {
+  const summaries = await listAllLayouts();
+  const validNames = new Set(
+    summaries.map((summary) => summary.name.toLowerCase()),
+  );
+
+  const files = await listLayoutCacheFiles();
+  const removed: string[] = [];
+  let kept = 0;
+
+  for (const file of files) {
+    let entry: LayoutCacheEntry;
+    try {
+      const raw = await readFile(path.join(LAYOUT_CACHE_DIR, file), "utf8");
+      entry = JSON.parse(raw) as LayoutCacheEntry;
+    } catch {
+      if (!options.dryRun) {
+        await rm(path.join(LAYOUT_CACHE_DIR, file), { force: true });
+      }
+      removed.push(file.replace(/\.json$/, ""));
+      continue;
+    }
+
+    if (validNames.has(entry.layout.toLowerCase())) {
+      kept++;
+      continue;
+    }
+
+    removed.push(entry.layout);
+    if (!options.dryRun) {
+      await rm(layoutCachePath(entry.layout), { force: true });
+    }
+  }
+
+  return {
+    removed,
+    kept,
+    dryRun: options.dryRun ?? false,
+  };
+}
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
