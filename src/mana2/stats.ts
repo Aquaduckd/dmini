@@ -24,6 +24,8 @@ const BIGRAM_STATS: StatDefinition[] = [
   { id: "skb", label: "SKB", percent: true, decimals: 2 },
   { id: "lsb", label: "LSB", decimals: 2 },
   { id: "vsb", label: "VSB", decimals: 2 },
+  { id: "lss", label: "LSS", decimals: 2 },
+  { id: "vss", label: "VSS", decimals: 2 },
 ];
 
 const TRIGRAM_STATS: StatDefinition[] = [
@@ -71,6 +73,8 @@ const LOWER_IS_BETTER_STATS = new Set([
   "skb",
   "lsb",
   "vsb",
+  "lss",
+  "vss",
   "alt",
   "altsfs",
   "redirect",

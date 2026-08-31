@@ -41,20 +41,16 @@ export const FINGER_PALETTES = {
   neon: {
     label: "Neon",
     colors: {
-      LP: "#e04592",
-      LR: "#cf43e3",
-      LM: "#458ddf",
-      LI: "#1dc098",
+      LP: "#c52f5e",
+      LR: "#d153b5",
+      LM: "#4d88ff",
+      LI: "#20de9b",
       LT: "#e6b800",
       RT: "#d97706",
-      RI: "#20bb59",
-      RM: "#458ddf",
-      RR: "#cf43e3",
-      RP: "#e04592",
-    },
-    textColors: {
-      LI: "#ffffff",
-      RI: "#ffffff",
+      RI: "#37f16e",
+      RM: "#4d88ff",
+      RR: "#d153b5",
+      RP: "#c52f5e",
     },
   },
   bloom: {
