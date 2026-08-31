@@ -48,11 +48,6 @@ interface KeyboardMeasurement {
   height: number;
 }
 
-function thumbDrawnCol(key: Pick<RenderKey, "finger" | "col">): number {
-  const leftThumbColumn = 3;
-  return (key.finger === "LT" ? leftThumbColumn : leftThumbColumn + 3) + key.col;
-}
-
 function getRowOffset(row: number, staggered: boolean): number {
   if (!staggered) return 0;
   return (ROW_OFFSET[row] ?? 0) * KEY_W;
@@ -85,8 +80,7 @@ function measureKeyboard(
     const rowOffset = isThumb
       ? getRowOffset(2, staggered)
       : getRowOffset(rowNumber, staggered);
-    const colOf = isThumb ? thumbDrawnCol : (key: RenderKey) => key.col;
-    const items = rowKeys.map((key) => ({ col: colOf(key), key }));
+    const items = rowKeys.map((key) => ({ col: key.col, key }));
 
     for (const item of items) {
       width = Math.max(width, keyX(item.col, rowOffset) + KEY_SIZE);
