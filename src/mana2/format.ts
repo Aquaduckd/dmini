@@ -54,6 +54,10 @@ const STAT_SECTIONS: StatSection[] = [
         { id: "lsb", label: "LSB", decimals: 2 },
         { id: "vsb", label: "VSB", decimals: 2 },
       ],
+      [
+        { id: "lss", label: "LSS", decimals: 2 },
+        { id: "vss", label: "VSS", decimals: 2 },
+      ],
     ],
   },
   {
@@ -233,6 +237,8 @@ const LOWER_IS_BETTER_STATS = new Set([
   "skb",
   "lsb",
   "vsb",
+  "lss",
+  "vss",
   "alt",
   "altsfs",
   "redirect",
