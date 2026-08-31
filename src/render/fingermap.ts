@@ -57,6 +57,51 @@ export const FINGER_PALETTES = {
       RI: "#ffffff",
     },
   },
+  bloom: {
+    label: "Bloom",
+    colors: {
+      LP: "#2f2a9b",
+      LR: "#7f34f6",
+      LM: "#bc5fae",
+      LI: "#ff60a6",
+      LT: "#e6b800",
+      RT: "#d97706",
+      RI: "#ff9fcb",
+      RM: "#bc5fae",
+      RR: "#7f34f6",
+      RP: "#2f2a9b",
+    },
+  },
+  grove: {
+    label: "Grove",
+    colors: {
+      LP: "#17342b",
+      LR: "#156a44",
+      LM: "#9d8829",
+      LI: "#684189",
+      LT: "#3f2143",
+      RT: "#392627",
+      RI: "#4c2587",
+      RM: "#9d8829",
+      RR: "#156a44",
+      RP: "#17342b",
+    },
+  },
+  sunset: {
+    label: "Sunset",
+    colors: {
+      LP: "#3d329b",
+      LR: "#346bf6",
+      LM: "#ff6300",
+      LI: "#ffc900",
+      LT: "#5a2d4b",
+      RT: "#6c3131",
+      RI: "#ffe66e",
+      RM: "#ff6300",
+      RR: "#346bf6",
+      RP: "#3d329b",
+    },
+  },
 } as const satisfies Record<string, FingermapPalette>;
 
 export type FingermapPaletteId = keyof typeof FINGER_PALETTES;

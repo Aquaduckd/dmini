@@ -74,7 +74,7 @@ export const configCommand: Command = {
             "",
             `Override corpus per command with \`--corpus <name>\` on \`${PREFIX}analyze\` and \`${PREFIX}examples\`.`,
             `Change render mode with \`${PREFIX}config render fingermap|heatmap\`.`,
-            `Change palette with \`${PREFIX}config palette cminibrowser|neon\`.`,
+            `Change palette with \`${PREFIX}config palette cminibrowser|neon|bloom|grove|sunset\`.`,
           ].join("\n"),
         ),
       );

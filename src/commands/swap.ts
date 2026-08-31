@@ -22,12 +22,16 @@ import { renderKeyboardPng } from "../render/keyboard.js";
 
 export const swapCommand: Command = {
   name: "swap",
-  description: "Swap key positions on one of your layouts",
-  usage: `${PREFIX}swap <layout> <swap1> [swap2] ...`,
-  notes: "Each swap is two letters whose positions are exchanged, e.g. `sc` swaps `s` and `c`.",
+  description: "Cycle key positions on one of your layouts",
+  usage: `${PREFIX}swap <layout> <cycle1> [cycle2] ...`,
+  notes:
+    "Each cycle rotates characters around, e.g. `sc` swaps `s` and `c`, `abc` cycles a→b→c→a. " +
+    "One character per cycle may be absent from the layout to replace a key, e.g. `a@` puts `@` where `a` was.",
   examples: [
     `${PREFIX}swap colemak sc`,
     `${PREFIX}swap mylayout sc ae th`,
+    `${PREFIX}swap mylayout abc`,
+    `${PREFIX}swap mylayout a@`,
   ],
   async execute({ message, args }) {
     const parts = args.trim().split(/\s+/).filter(Boolean);
@@ -37,7 +41,7 @@ export const swapCommand: Command = {
     }
 
     const name = parts[0]!;
-    const pairs = parts.slice(1);
+    const cycles = parts.slice(1);
 
     try {
       const layout = await fetchLayoutDoc(name);
@@ -50,7 +54,7 @@ export const swapCommand: Command = {
         return;
       }
 
-      applySwaps(layout, pairs);
+      applySwaps(layout, cycles);
       await updateLayout(layout);
 
       const renderKeys = layoutToRenderKeys(layout);
@@ -67,13 +71,13 @@ export const swapCommand: Command = {
       const attachment = new AttachmentBuilder(png, { name: filename });
       const embed = new EmbedBuilder()
         .setColor(Colors.primary)
-        .setTitle(`Swapped ${layout.name}`)
+        .setTitle(`Updated ${layout.name}`)
         .setAuthor({ name: message.author.username })
         .setImage(`attachment://${filename}`)
         .setDescription(
-          pairs.length === 1
-            ? `Swapped \`${pairs[0]![0]}\` and \`${pairs[0]![1]}\`.`
-            : `Applied ${pairs.length} swaps: ${pairs.map((pair) => `\`${pair}\``).join(", ")}.`,
+          cycles.length === 1
+            ? `Applied cycle \`${cycles[0]}\`.`
+            : `Applied ${cycles.length} cycles: ${cycles.map((cycle) => `\`${cycle}\``).join(", ")}.`,
         )
         .setFooter({ text: `Board: ${layout.board}` });
 
